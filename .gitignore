@@ -1,0 +1,38 @@
+# Terraform working data and state
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Variable files can contain project identifiers or secrets
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+
+# Local Terraform CLI configuration
+.terraformrc
+terraform.rc
+
+# Credentials and local cluster access
+.env
+.env.*
+!.env.example
+kubeconfig*
+*.pem
+*.key
+*.p12
+
+# Test output and editor files
+test-results/
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
