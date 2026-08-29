@@ -8,8 +8,8 @@ func setRequiredEnvironment(t *testing.T) {
 	t.Setenv("JOBS_TOPIC", "jobs")
 	t.Setenv("JOBS_SUBSCRIPTION", "worker")
 	t.Setenv("RESULTS_BUCKET", "results")
-	t.Setenv("LAB_TOKEN_SECRET", "projects/project/secrets/token")
-	t.Setenv("WORKER_SALT_SECRET", "projects/project/secrets/salt")
+	t.Setenv("LAB_TOKEN_RESOURCE", "projects/project/secrets/token")
+	t.Setenv("WORKER_SALT_RESOURCE", "projects/project/secrets/salt")
 }
 
 func TestLoadRequiresAllManagedDependencies(t *testing.T) {

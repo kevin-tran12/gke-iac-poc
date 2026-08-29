@@ -1,7 +1,3 @@
-variable "project_id" {
-  type = string
-}
-
 variable "cluster_dns_endpoint" {
   type = string
 }

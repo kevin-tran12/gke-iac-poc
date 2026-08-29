@@ -7,6 +7,6 @@ data:
   JOBS_TOPIC: gke-lab-jobs
   JOBS_SUBSCRIPTION: gke-lab-jobs-worker
   RESULTS_BUCKET: replace-at-render
-  LAB_TOKEN_SECRET: projects/replace/secrets/gke-lab-api-token
-  WORKER_SALT_SECRET: projects/replace/secrets/gke-lab-worker-salt
+  LAB_TOKEN_RESOURCE: projects/replace/secrets/gke-lab-api-token
+  WORKER_SALT_RESOURCE: projects/replace/secrets/gke-lab-worker-salt
   OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector.observability.svc.cluster.local:4317

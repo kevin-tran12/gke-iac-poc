@@ -122,6 +122,10 @@ resource "google_container_node_pool" "system" {
     service_account = google_service_account.nodes.email
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
 
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
+
     workload_metadata_config {
       mode = "GKE_METADATA"
     }
@@ -168,6 +172,10 @@ resource "google_container_node_pool" "spot" {
     spot            = true
     service_account = google_service_account.nodes.email
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
 
     workload_metadata_config {
       mode = "GKE_METADATA"

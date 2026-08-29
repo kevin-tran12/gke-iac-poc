@@ -9,20 +9,44 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  layer-00: { uses: ./.github/workflows/ci-layer-00-tooling.yml }
-  layer-01: { uses: ./.github/workflows/ci-layer-01-bootstrap.yml }
-  layer-02: { needs: layer-01, uses: ./.github/workflows/ci-layer-02-network.yml }
-  layer-03: { needs: layer-02, uses: ./.github/workflows/ci-layer-03-platform.yml }
-  layer-04: { needs: layer-03, uses: ./.github/workflows/ci-layer-04-cluster.yml }
-  layer-05: { needs: layer-04, uses: ./.github/workflows/ci-layer-05-addons.yml }
-  layer-06: { needs: layer-05, uses: ./.github/workflows/ci-layer-06-workloads.yml }
-  layer-07: { needs: layer-06, uses: ./.github/workflows/ci-layer-07-delivery.yml }
-  layer-08: { needs: layer-07, uses: ./.github/workflows/ci-layer-08-edge.yml }
-  layer-09: { needs: layer-08, uses: ./.github/workflows/ci-layer-09-resilience.yml }
+  security:
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/ci-security.yml
+  layer-00:
+    uses: ./.github/workflows/ci-layer-00-tooling.yml
+  layer-01:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-01-bootstrap.yml
+  layer-02:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-02-network.yml
+  layer-03:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-03-platform.yml
+  layer-04:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-04-cluster.yml
+  layer-05:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-05-addons.yml
+  layer-06:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-06-workloads.yml
+  layer-07:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-07-delivery.yml
+  layer-08:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-08-edge.yml
+  layer-09:
+    needs: [security, layer-00]
+    uses: ./.github/workflows/ci-layer-09-resilience.yml
   all-required:
     name: ci/all-required
     if: always()
-    needs: [layer-00, layer-01, layer-02, layer-03, layer-04, layer-05, layer-06, layer-07, layer-08, layer-09]
+    needs: [security, layer-00, layer-01, layer-02, layer-03, layer-04, layer-05, layer-06, layer-07, layer-08, layer-09]
     runs-on: ubuntu-24.04
     steps:
       - name: Require every layer

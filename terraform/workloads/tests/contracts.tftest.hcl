@@ -5,7 +5,6 @@ run "workload_guardrails_contract" {
   command = plan
 
   variables {
-    project_id             = "gke-lab-unit-test"
     cluster_dns_endpoint   = "example.gke.goog"
     cluster_ca_certificate = "Y2E="
     api_service_account    = "gke-lab-api@gke-lab-unit-test.iam.gserviceaccount.com"

@@ -16,6 +16,13 @@
 | Container images | immutable digest only | Terraform inputs and release evidence |
 | GitHub Actions | immutable 40-character SHA | workflow files |
 | Mermaid CLI | 11.12.0 documentation renderer | diagram render workflow |
+| actionlint | 1.7.12 | security-tool installer |
+| Gitleaks | 8.28.0 | security-tool installer |
+| govulncheck | 1.7.0 | security-tool installer |
+| Kubeconform | 0.7.0 | security-tool installer |
+| TFLint / Google rules | 0.64.0 / 0.39.0 | installer and `.tflint.hcl` |
+| Trivy | 0.72.0 with verified release SHA-256 | security-tool installer |
+| CodeQL Action | 4.36.0 pinned to a full commit SHA | security workflow |
 
 Dependabot opens controlled updates. A version change must update the relevant
 manifest/lockfile, this inventory, release or migration notes, and affected tests.

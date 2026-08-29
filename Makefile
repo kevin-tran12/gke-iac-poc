@@ -3,10 +3,13 @@ LAYER ?= 0
 PROFILE ?= core
 NAME ?=
 
-.PHONY: validate hooks layer test-layer provision-through release lab evidence teardown-runtime teardown-final verify-zero-cost diagrams
+.PHONY: validate security hooks layer test-layer provision-through release lab evidence teardown-runtime teardown-final verify-zero-cost diagrams
 
 validate:
 	bash ./scripts/validate.sh
+
+security:
+	bash ./scripts/ci/security-gates.sh
 
 hooks:
 	bash ./scripts/install-hooks.sh

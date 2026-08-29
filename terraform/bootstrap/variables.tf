@@ -19,12 +19,6 @@ variable "region" {
   default = "us-central1"
 }
 
-variable "github_repository" {
-  description = "Repository in owner/name form."
-  type        = string
-  default     = "kevin-tran12/gke-iac-poc"
-}
-
 variable "github_owner_id" {
   description = "Immutable numeric GitHub owner ID."
   type        = string
