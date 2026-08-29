@@ -8,9 +8,10 @@ ARG KUBECTL_VERSION=v1.36.1
 ARG KUBECTL_SHA256=629d3f410e09bf49b64ae7079f7f0bda1191efed311f7d37fdbab0ad5b0ec2b7
 ARG HELM_VERSION=v3.19.0
 ARG HELM_SHA256=a7f81ce08007091b86d8bd696eb4d86b8d0f2e1b9f6c714be62f82f96a594496
+ARG GCLOUD_VERSION=582.0.0-0
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl unzip make jq shellcheck ripgrep gettext-base \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg unzip make jq shellcheck ripgrep gettext-base \
     && curl -fsSLo /tmp/terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" \
     && echo "${TERRAFORM_SHA256}  /tmp/terraform.zip" | sha256sum --check --strict - \
     && unzip /tmp/terraform.zip -d /usr/local/bin \
@@ -24,8 +25,18 @@ RUN apt-get update \
     && tar -C /tmp -xzf /tmp/helm.tar.gz \
     && install /tmp/linux-amd64/helm /usr/local/bin/helm \
     && chmod +x /usr/local/bin/kubectl \
+    && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+      | gpg --dearmor --batch --yes -o /usr/share/keyrings/cloud.google.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+      > /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && apt-get update \
+    && CLOUDSDK_SKIP_PY_COMPILATION=1 apt-get install -y --no-install-recommends "google-cloud-cli=${GCLOUD_VERSION}" \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 
 ENV PATH="/usr/local/go/bin:${PATH}"
+
+COPY scripts/install-security-tools.sh /tmp/install-security-tools.sh
+RUN bash /tmp/install-security-tools.sh /usr/local/bin \
+    && rm /tmp/install-security-tools.sh
 
 USER vscode

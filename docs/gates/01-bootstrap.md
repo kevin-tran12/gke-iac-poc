@@ -2,5 +2,6 @@
 
 Apply locally with a dedicated billing choice. Verify the project/API allowlist,
 budget, versioned private state bucket, repository-ID-bound WIF provider, separate
-plan/apply identities, and absence of service-account keys. Migrate bootstrap state
-only after these checks and publish the gate record.
+plan/apply identities, main-branch workflow allowlisting for apply impersonation,
+and absence of service-account keys or Terraform access to secret payloads. Migrate
+bootstrap state only after these checks and publish the gate record.

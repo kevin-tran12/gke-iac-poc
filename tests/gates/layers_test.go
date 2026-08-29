@@ -57,8 +57,24 @@ func requireNotContains(t *testing.T, name string, values ...string) {
 func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 	requireContains(t, "terraform/bootstrap/main.tf",
 		"auto_create_network = false", "google_billing_budget", "github_repository_id",
-		"github_owner_id", "roles/iam.workloadIdentityUser", "uniform_bucket_level_access = true")
-	requireNotContains(t, "terraform/bootstrap/main.tf", "google_service_account_key")
+		"github_owner_id", "org_id              = var.organization_id",
+		"roles/iam.workloadIdentityUser", "uniform_bucket_level_access = true",
+		`"attribute.workflow_ref"`, "local.apply_workflow_refs", "@refs/heads/main",
+		`"billingbudgets.googleapis.com"`, "depends_on = [google_project_service.required]")
+	requireContains(t, "terraform/bootstrap/versions.tf",
+		`alias                 = "billing"`, "billing_project       = var.project_id",
+		"user_project_override = true")
+	requireContains(t, "scripts/gates/run-layer.sh",
+		`TF_VAR_project_id="$(terraform -chdir=terraform/bootstrap output -raw project_id)"`,
+		`TF_STATE_BUCKET="$(terraform -chdir=terraform/bootstrap output -raw state_bucket)"`,
+		"export TF_VAR_project_id TF_VAR_project_number TF_VAR_region TF_STATE_BUCKET")
+	requireContains(t, "scripts/gates/test-live-layer.sh",
+		"bootstrap-project.json", "billingbudgets.googleapis.com",
+		"bootstrap-state-bucket.json", ".uniform_bucket_level_access == true",
+		`.public_access_prevention == "enforced"`, "--managed-by=user")
+	requireNotContains(t, "terraform/bootstrap/main.tf",
+		"google_service_account_key", `"roles/secretmanager.secretAccessor"`,
+		`"roles/cloudkms.signerVerifier"`)
 }
 
 func TestLayer02NetworkIsPrivateByDefault(t *testing.T) {

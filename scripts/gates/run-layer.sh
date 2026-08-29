@@ -99,6 +99,13 @@ fi
 PLAN_DIGEST=$(sha256sum "test-results/live/${root}.tfplan" | cut -d' ' -f1)
 export PLAN_DIGEST
 if [[ "${APPLY:-false}" == true ]]; then
+  if (( layer == 1 )); then
+    TF_VAR_project_id="$(terraform -chdir=terraform/bootstrap output -raw project_id)"
+    TF_VAR_project_number="$(terraform -chdir=terraform/bootstrap output -raw project_number)"
+    TF_VAR_region="$(terraform -chdir=terraform/bootstrap output -raw region)"
+    TF_STATE_BUCKET="$(terraform -chdir=terraform/bootstrap output -raw state_bucket)"
+    export TF_VAR_project_id TF_VAR_project_number TF_VAR_region TF_STATE_BUCKET
+  fi
   TF_STATE_SERIAL=$(terraform -chdir="terraform/${root}" state pull | jq -r .serial)
   export TF_STATE_SERIAL
   bash scripts/gates/test-live-layer.sh "$layer" "$profile"

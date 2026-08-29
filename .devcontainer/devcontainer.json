@@ -1,7 +1,23 @@
 {
   "name": "gke-iac-poc",
-  "build": { "dockerfile": "Dockerfile" },
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
   "remoteUser": "vscode",
+  "containerEnv": {
+    "TF_PLUGIN_CACHE_DIR": "/home/vscode/.terraform.d/plugin-cache"
+  },
+  "mounts": [
+    "source=gke-iac-poc-gh-auth,target=/home/vscode/.config/gh,type=volume",
+    "source=gke-iac-poc-gcloud-auth,target=/home/vscode/.config/gcloud,type=volume",
+    "source=gke-iac-poc-gpg,target=/home/vscode/.gnupg,type=volume",
+    "source=gke-iac-poc-go-build,target=/home/vscode/.cache/go-build,type=volume",
+    "source=gke-iac-poc-go-modules,target=/home/vscode/go/pkg/mod,type=volume",
+    "source=gke-iac-poc-trivy,target=/home/vscode/.cache/trivy,type=volume",
+    "source=gke-iac-poc-tflint,target=/home/vscode/.tflint.d,type=volume",
+    "source=gke-iac-poc-terraform,target=/home/vscode/.terraform.d/plugin-cache,type=volume"
+  ],
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}

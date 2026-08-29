@@ -1,5 +1,9 @@
 mock_provider "google" {}
 
+mock_provider "google" {
+  alias = "billing"
+}
+
 run "disposable_project_contract" {
   command = plan
 

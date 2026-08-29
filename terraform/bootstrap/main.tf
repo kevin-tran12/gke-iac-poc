@@ -2,6 +2,7 @@ locals {
   services = toset([
     "artifactregistry.googleapis.com",
     "binaryauthorization.googleapis.com",
+    "billingbudgets.googleapis.com",
     "cloudbilling.googleapis.com",
     "cloudbuild.googleapis.com",
     "clouddeploy.googleapis.com",
@@ -22,12 +23,23 @@ locals {
     "sts.googleapis.com",
     "storage.googleapis.com",
   ])
+
+  # Only these reviewed deployment workflows, running from the protected main
+  # branch, may impersonate the privileged Terraform apply service account.
+  apply_workflow_refs = toset([
+    "${var.github_repository}/.github/workflows/promote-production.yml@refs/heads/main",
+    "${var.github_repository}/.github/workflows/provision-through-layer.yml@refs/heads/main",
+    "${var.github_repository}/.github/workflows/reaper.yml@refs/heads/main",
+    "${var.github_repository}/.github/workflows/run-full-lab.yml@refs/heads/main",
+    "${var.github_repository}/.github/workflows/teardown.yml@refs/heads/main",
+  ])
 }
 
 resource "google_project" "lab" {
   project_id          = var.project_id
   name                = var.project_name
   billing_account     = var.billing_account
+  org_id              = var.organization_id
   auto_create_network = false
   labels              = var.labels
 }
@@ -94,6 +106,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
     "attribute.repository"       = "assertion.repository"
     "attribute.repository_id"    = "assertion.repository_id"
     "attribute.repository_owner" = "assertion.repository_owner"
+    "attribute.workflow_ref"     = "assertion.workflow_ref"
   }
 
   attribute_condition = "assertion.repository_id == '${var.github_repository_id}' && assertion.repository_owner_id == '${var.github_owner_id}'"
@@ -110,9 +123,11 @@ resource "google_service_account_iam_member" "plan_wif" {
 }
 
 resource "google_service_account_iam_member" "apply_wif" {
+  for_each = local.apply_workflow_refs
+
   service_account_id = google_service_account.terraform_apply.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository_id/${var.github_repository_id}"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.workflow_ref/${each.value}"
 }
 
 resource "google_project_iam_member" "plan_roles" {
@@ -134,7 +149,6 @@ resource "google_project_iam_member" "apply_roles" {
     "roles/cloudbuild.builds.editor",
     "roles/clouddeploy.admin",
     "roles/cloudkms.admin",
-    "roles/cloudkms.signerVerifier",
     "roles/cloudsql.admin",
     "roles/compute.networkAdmin",
     "roles/container.admin",
@@ -147,7 +161,6 @@ resource "google_project_iam_member" "apply_roles" {
     "roles/pubsub.admin",
     "roles/resourcemanager.projectIamAdmin",
     "roles/secretmanager.admin",
-    "roles/secretmanager.secretAccessor",
     "roles/servicenetworking.networksAdmin",
     "roles/storage.admin",
   ])
@@ -170,6 +183,8 @@ resource "google_storage_bucket_iam_member" "state_apply" {
 }
 
 resource "google_billing_budget" "lab" {
+  provider = google.billing
+
   billing_account = var.billing_account
   display_name    = "${var.project_name} budget"
 
@@ -190,4 +205,6 @@ resource "google_billing_budget" "lab" {
       threshold_percent = threshold_rules.value
     }
   }
+
+  depends_on = [google_project_service.required]
 }

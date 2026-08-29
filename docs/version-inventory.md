@@ -9,6 +9,7 @@
 | Go | 1.26.7 toolchain; module language 1.26 | Dockerfile, Dev Container, workflow, `go.mod` |
 | GKE/Kubernetes | Regular release channel | live gate evidence |
 | kubectl | 1.36.1 client baseline | Dev Container |
+| Google Cloud CLI | 582.0.0 | Dev Container Dockerfile |
 | cert-manager | 1.21.x | addons variables and Helm lock evidence |
 | PostgreSQL | 18 Enterprise | platform Terraform |
 | Cloud Pub/Sub Go | v2.6.2 | `app/go.mod`/`go.sum` |
