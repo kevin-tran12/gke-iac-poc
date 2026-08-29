@@ -19,6 +19,7 @@ build_result=test-results/live/cloud-build.json
 gcloud builds submit --config cloudbuild.yaml \
 	--project="$TF_VAR_project_id" \
 	--service-account="projects/${TF_VAR_project_id}/serviceAccounts/${CLOUD_BUILD_SERVICE_ACCOUNT}" \
+	--gcs-source-staging-dir="gs://${EVIDENCE_BUCKET}/cloud-build-source" \
 	--substitutions="_REGISTRY=${registry},_GO_BUILDER_IMAGE=${GO_BUILDER_IMAGE},_DOCKER_BUILDER_IMAGE=${DOCKER_BUILDER_IMAGE},_RUNTIME_IMAGE=${RUNTIME_IMAGE},_SYFT_IMAGE=${SYFT_IMAGE},_EVIDENCE_BUCKET=${EVIDENCE_BUCKET}" \
 	--format=json >"$build_result"
 
