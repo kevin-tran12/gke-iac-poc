@@ -77,6 +77,14 @@ func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 		`"roles/cloudkms.signerVerifier"`)
 }
 
+func TestGateScriptsUseThePinnedContainerToolchain(t *testing.T) {
+	requireContains(t, "scripts/gates/check-prerequisites.sh", "date -u -d", "expires_epoch > now_epoch")
+	requireContains(t, "scripts/reap-if-expired.sh", "date -u -d", "expires_epoch <= now_epoch")
+	requireNotContains(t, "scripts/gates/check-prerequisites.sh", "python3")
+	requireNotContains(t, "scripts/reap-if-expired.sh", "python3")
+	requireNotContains(t, "tests/labs/pubsub-redelivery.sh", "python3")
+}
+
 func TestLayer02NetworkIsPrivateByDefault(t *testing.T) {
 	requireContains(t, "terraform/network/main.tf",
 		"private_ip_google_access = true", "secondary_ip_range", "log_config", "var.enable_nat ? 1 : 0")
