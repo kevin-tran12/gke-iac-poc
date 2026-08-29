@@ -18,6 +18,9 @@ verification succeeds. Failure labs use `destructive-labs`; runtime teardown and
 final project deletion use `final-delete`. They do not masquerade as successful
 provisioning gates.
 
-Gate records bind the layer to a commit, state serial, plan digest, profile, test
-result, creation time, and expiry time. Later layers reject missing, stale,
-expired, failed, or commit-mismatched records.
+Gate records retain the producing commit for auditability and bind proof to a
+cumulative source digest, state serial, plan digest, profile, test result,
+creation time, and expiry time. A later-layer change can reuse unchanged
+upstream proof. A change to a layer or any upstream input invalidates that layer
+and every downstream gate. Records from unrelated histories, legacy
+commit-only records, expired records, and failed records are rejected.

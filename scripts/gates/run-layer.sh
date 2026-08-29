@@ -5,6 +5,13 @@ layer=${1:?layer required}
 profile=${2:-core}
 export PROFILE=$profile
 
+if [[ "${APPLY:-false}" == true ]]; then
+  if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
+    printf 'live apply requires a clean working tree so gate evidence matches reviewed source\n' >&2
+    exit 1
+  fi
+fi
+
 roots=(tooling bootstrap network platform cluster addons workloads delivery edge recovery)
 (( layer >= 0 && layer < ${#roots[@]} )) || { printf 'layer must be 0-%s\n' "$((${#roots[@]} - 1))" >&2; exit 2; }
 root=${roots[$layer]}
