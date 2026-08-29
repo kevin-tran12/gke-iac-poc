@@ -15,10 +15,6 @@ test -s "$record" || { printf 'layer %s has no prerequisite gate record\n' "$lay
 test "$(jq -r .status "$record")" = passed
 test "$(jq -r .commit_sha "$record")" = "$(git rev-parse HEAD)"
 expires=$(jq -r .expires_at "$record")
-python3 - "$expires" <<'PY'
-from datetime import datetime, timezone
-import sys
-expires = datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00"))
-if expires <= datetime.now(timezone.utc):
-    raise SystemExit("prerequisite gate has expired")
-PY
+expires_epoch=$(date -u -d "$expires" +%s)
+now_epoch=$(date -u +%s)
+(( expires_epoch > now_epoch )) || { printf 'prerequisite gate has expired\n' >&2; exit 1; }
