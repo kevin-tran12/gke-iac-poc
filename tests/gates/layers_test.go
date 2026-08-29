@@ -85,6 +85,17 @@ func TestGateScriptsUseThePinnedContainerToolchain(t *testing.T) {
 	requireNotContains(t, "tests/labs/pubsub-redelivery.sh", "python3")
 }
 
+func TestGateEvidenceUsesCumulativeSourceDigests(t *testing.T) {
+	requireContains(t, "scripts/gates/layer-source-digest.sh",
+		"change to a later layer leaves earlier proof reusable", "terraform/bootstrap",
+		"terraform/network", "terraform/platform", "terraform/recovery", "git hash-object")
+	requireContains(t, "scripts/gates/check-prerequisites.sh",
+		"git merge-base --is-ancestor", ".source_digest // empty", "layer-source-digest.sh")
+	requireContains(t, "scripts/gates/record-result.sh", "source_digest", "layer-source-digest.sh")
+	requireContains(t, "scripts/gates/run-layer.sh",
+		"live apply requires a clean working tree", "git diff --quiet", "git diff --cached --quiet")
+}
+
 func TestLayer02NetworkIsPrivateByDefault(t *testing.T) {
 	requireContains(t, "terraform/network/main.tf",
 		"private_ip_google_access = true", "secondary_ip_range", "log_config", "var.enable_nat ? 1 : 0")
