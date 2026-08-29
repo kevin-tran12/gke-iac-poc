@@ -5,7 +5,6 @@ run "private_gke_contract" {
 
   variables {
     project_id                = "gke-lab-unit-test"
-    project_number            = "123456789012"
     network_id                = "projects/gke-lab-unit-test/global/networks/gke-lab"
     subnet_id                 = "projects/gke-lab-unit-test/regions/us-central1/subnetworks/gke-lab"
     pods_range_name           = "pods"

@@ -1,0 +1,11 @@
+misconfigurations:
+  - id: KSV-0109
+    paths:
+      - deploy/base/configmap.yaml
+    statement: The values are Secret Manager resource identifiers without versions or secret data; workloads fetch values at runtime through Workload Identity.
+    expired_at: 2027-08-29
+  - id: GCP-0061
+    paths:
+      - terraform/cluster/main.tf
+    statement: The GKE control plane has IP endpoints disabled and is reachable only through the authenticated DNS endpoint, so IP-based master authorized networks do not apply.
+    expired_at: 2027-08-29

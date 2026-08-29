@@ -4,14 +4,24 @@ CI is part of each layer's implementation. A layer is not complete if its local
 gate and pull-request workflow lack static checks, gate tests, negative tests,
 cleanup checks, documentation, and evidence expectations.
 
-`scripts/ci/test-layer.sh` is the single source for local and GitHub checks.
+`scripts/ci/test-layer.sh` is the single source for local and GitHub layer checks,
+and `scripts/ci/security-gates.sh` is the shared security gate.
 Developers run it through `make test-layer`; the version-controlled pre-push hook
 runs all layers; each reusable workflow calls the same script. The Dev Container
 provides the pinned Linux toolchain needed for race detection and ShellCheck.
 
 Pull-request workflows are read-only. They use pinned actions and run Go tests,
 Terraform init without a backend, validate/test, manifest rendering, ShellCheck,
-and documentation checks. The aggregate `ci/all-required` check protects `main`.
+documentation checks, Actionlint, immutable action-reference enforcement,
+Gitleaks, govulncheck, TFLint with Google rules, Kubeconform, and Trivy IaC
+scanning. GitHub-managed CodeQL default setup separately scans Actions, Go, and
+JavaScript/TypeScript. The aggregate `ci/all-required` check protects `main`.
+
+The pull-request workflow uses a fan-out/fan-in topology. Security and layer 00
+run first as shared prerequisites. After both succeed, static checks for layers
+01 through 09 run independently in parallel, and `ci/all-required` combines
+their results into one branch-protection check. Local `make test-all` remains
+sequential for readable output and predictable failure diagnosis.
 
 Live integration runs after merge or manual dispatch. It receives short-lived GCP
 credentials through GitHub OIDC, locks one environment at a time, executes only

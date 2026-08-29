@@ -5,6 +5,8 @@ if ! git config --global --get-all safe.directory | grep -Fxq "$PWD"; then
   git config --global --add safe.directory "$PWD"
 fi
 
+sudo bash scripts/install-security-tools.sh /usr/local/bin
+
 printf 'Terraform: %s\n' "$(terraform version -json | jq -r .terraform_version)"
 printf 'Go: %s\n' "$(go version)"
 printf 'kubectl: %s\n' "$(kubectl version --client -o json | jq -r .clientVersion.gitVersion)"

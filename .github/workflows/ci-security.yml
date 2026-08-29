@@ -1,0 +1,20 @@
+name: CI security gates
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  security-gates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-toolchain
+      - name: Install pinned security tools
+        run: |
+          bash scripts/install-security-tools.sh "$HOME/.local/bin"
+          printf '%s\n' "$HOME/.local/bin" >>"$GITHUB_PATH"
+      - name: Run shared security gates
+        run: PATH="$HOME/.local/bin:$PATH" bash scripts/ci/security-gates.sh
