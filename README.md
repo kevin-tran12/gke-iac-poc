@@ -77,6 +77,14 @@ make teardown-final
 layers, and GitHub Actions repeats those exact shared checks before any protected
 live integration can authenticate to Google Cloud.
 
+The Dev Container image bakes in the pinned security tools so Docker can reuse
+that build layer. Named volumes persist GitHub CLI and Google Cloud CLI
+authentication, Go modules, Go build output, Terraform providers, TFLint
+plugins, and Trivy policies across ordinary container rebuilds. Use **Rebuild
+Container** to retain Docker's build cache; **Rebuild Container Without Cache**
+intentionally downloads everything again. Deleting the named volumes also
+removes their cached data and CLI logins.
+
 Normal provisioning and delivery never require a manual `kubectl apply`.
 `kubectl` is used for observation and tightly bounded failure injection only.
 

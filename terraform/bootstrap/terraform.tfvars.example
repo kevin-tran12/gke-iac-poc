@@ -1,5 +1,7 @@
 project_id           = "replace-with-globally-unique-project-id"
 billing_account      = "000000-000000-000000"
+organization_id      = null # Or the numeric organization ID for an organization-owned project.
 github_owner_id      = "replace-with-numeric-owner-id"
 github_repository_id = "replace-with-numeric-repository-id"
+github_repository    = "your-github-owner/gke-iac-poc"
 budget_amount_usd    = 75

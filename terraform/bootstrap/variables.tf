@@ -14,6 +14,13 @@ variable "billing_account" {
   sensitive   = true
 }
 
+variable "organization_id" {
+  description = "Optional Google Cloud organization that owns the lab project. Preserve the existing organization when importing a project."
+  type        = string
+  default     = null
+  nullable    = true
+}
+
 variable "region" {
   type    = string
   default = "us-central1"
@@ -27,6 +34,12 @@ variable "github_owner_id" {
 variable "github_repository_id" {
   description = "Immutable numeric GitHub repository ID."
   type        = string
+}
+
+variable "github_repository" {
+  description = "GitHub repository in owner/name form, used to allowlist reviewed apply workflows."
+  type        = string
+  default     = "kevin-tran12/gke-iac-poc"
 }
 
 variable "budget_amount_usd" {

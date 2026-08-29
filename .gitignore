@@ -8,8 +8,10 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+*.tfvars
 *.auto.tfvars
 !terraform/profiles/*.tfvars
+/terraform/bootstrap/backend.tf
 
 # Credentials and local cloud state
 *.pem
