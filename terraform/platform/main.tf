@@ -106,6 +106,12 @@ resource "google_service_account" "cloud_deploy" {
   display_name = "GKE lab Cloud Deploy execution"
 }
 
+resource "google_project_service_identity" "cloud_deploy" {
+  provider = google-beta
+  project  = var.project_id
+  service  = "clouddeploy.googleapis.com"
+}
+
 resource "google_project_iam_member" "api_roles" {
   for_each = toset([
     "roles/logging.logWriter",
@@ -227,7 +233,7 @@ resource "google_project_iam_member" "cloud_deploy_roles" {
 resource "google_service_account_iam_member" "cloud_deploy_service_agent" {
   service_account_id = google_service_account.cloud_deploy.name
   role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:service-${var.project_number}@gcp-sa-clouddeploy.iam.gserviceaccount.com"
+  member             = google_project_service_identity.cloud_deploy.member
 }
 
 resource "google_storage_bucket_iam_member" "cloud_deploy_artifacts" {

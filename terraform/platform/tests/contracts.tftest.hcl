@@ -1,4 +1,5 @@
 mock_provider "google" {}
+mock_provider "google-beta" {}
 
 run "managed_services_contract" {
   command = plan
@@ -22,5 +23,10 @@ run "managed_services_contract" {
   assert {
     condition     = length(google_sql_database_instance.postgres) == 0
     error_message = "Cloud SQL must remain opt-in."
+  }
+
+  assert {
+    condition     = google_project_service_identity.cloud_deploy.service == "clouddeploy.googleapis.com"
+    error_message = "Cloud Deploy IAM must depend on an explicitly provisioned Google-managed service identity."
   }
 }
