@@ -18,7 +18,7 @@ paths=(
 
 (( layer >= 1 )) && paths+=(terraform/bootstrap scripts/migrate-state.sh)
 (( layer >= 2 )) && paths+=(terraform/network terraform/profiles/egress.tfvars)
-(( layer >= 3 )) && paths+=(terraform/platform terraform/profiles/data.tfvars)
+(( layer >= 3 )) && paths+=(terraform/platform terraform/profiles/data.tfvars scripts/mirror-public-images.sh docs/public-test-images.md)
 (( layer >= 4 )) && paths+=(terraform/cluster terraform/profiles/core.tfvars terraform/profiles/ha.tfvars terraform/profiles/recovery.tfvars)
 (( layer >= 5 )) && paths+=(terraform/addons)
 (( layer >= 6 )) && paths+=(terraform/workloads deploy/base deploy/overlays)
