@@ -11,10 +11,11 @@
 | kubectl | 1.36.1 client baseline | Dev Container |
 | cert-manager | 1.21.x | addons variables and Helm lock evidence |
 | PostgreSQL | 18 Enterprise | platform Terraform |
-| Cloud Pub/Sub Go | v2.6.0 | `app/go.mod`/`go.sum` |
-| OpenTelemetry Go | v1.44.0 coordinated release | `app/go.mod`/`go.sum` |
+| Cloud Pub/Sub Go | v2.6.2 | `app/go.mod`/`go.sum` |
+| OpenTelemetry Go | v1.46.0 coordinated release; HTTP instrumentation v0.70.0 | `app/go.mod`/`go.sum` |
 | Container images | immutable digest only | Terraform inputs and release evidence |
 | GitHub Actions | immutable 40-character SHA | workflow files |
+| upload-artifact action | v7.0.1 pinned to a full commit SHA | workflow files |
 | Mermaid CLI | 11.12.0 documentation renderer | diagram render workflow |
 | actionlint | 1.7.12 | security-tool installer |
 | Gitleaks | 8.28.0 | security-tool installer |
