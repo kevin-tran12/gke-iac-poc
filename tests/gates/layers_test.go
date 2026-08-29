@@ -105,7 +105,9 @@ func TestLayer02NetworkIsPrivateByDefault(t *testing.T) {
 func TestLayer03PlatformDurabilityAndLifecycle(t *testing.T) {
 	requireContains(t, "terraform/platform/main.tf",
 		"dead_letter_policy", "max_delivery_attempts = 5", "public_access_prevention",
-		`role   = "roles/storage.bucketViewer"`, `resource "google_storage_bucket_iam_member" "cloud_build_source"`)
+		`role   = "roles/storage.bucketViewer"`, `resource "google_storage_bucket_iam_member" "cloud_build_source"`,
+		`resource "google_project_service_identity" "cloud_deploy"`,
+		"member             = google_project_service_identity.cloud_deploy.member")
 	requireNotContains(t, "terraform/platform/main.tf", `"roles/storage.objectViewer",`)
 	requireContains(t, "app/internal/objectstore/gcs.go", "DoesNotExist: true", "ErrAlreadyExists")
 	requireNotContains(t, "terraform/platform/main.tf", "google_secret_manager_secret_version")
