@@ -14,8 +14,8 @@ Pull-request workflows are read-only. They use pinned actions and run Go tests,
 Terraform init without a backend, validate/test, manifest rendering, ShellCheck,
 documentation checks, Actionlint, immutable action-reference enforcement,
 Gitleaks, govulncheck, TFLint with Google rules, Kubeconform, and Trivy IaC
-scanning. A separate CodeQL job uploads Go findings to GitHub code scanning. The
-aggregate `ci/all-required` check protects `main`.
+scanning. GitHub-managed CodeQL default setup separately scans Actions, Go, and
+JavaScript/TypeScript. The aggregate `ci/all-required` check protects `main`.
 
 The pull-request workflow uses a fan-out/fan-in topology. Security and layer 00
 run first as shared prerequisites. After both succeed, static checks for layers

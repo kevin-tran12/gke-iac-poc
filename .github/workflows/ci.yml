@@ -10,9 +10,6 @@ concurrency:
   cancel-in-progress: true
 jobs:
   security:
-    permissions:
-      contents: read
-      security-events: write
     uses: ./.github/workflows/ci-security.yml
   layer-00:
     uses: ./.github/workflows/ci-layer-00-tooling.yml

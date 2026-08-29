@@ -18,23 +18,3 @@ jobs:
           printf '%s\n' "$HOME/.local/bin" >>"$GITHUB_PATH"
       - name: Run shared security gates
         run: PATH="$HOME/.local/bin:$PATH" bash scripts/ci/security-gates.sh
-  codeql:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/setup-toolchain
-      - uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
-        with:
-          languages: go
-          build-mode: manual
-      - name: Build Go modules for CodeQL
-        run: |
-          (cd app && go build ./...)
-          (cd tests && go build ./...)
-      - uses: github/codeql-action/analyze@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
-        with:
-          category: /language:go
