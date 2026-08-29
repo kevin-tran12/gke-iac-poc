@@ -6,7 +6,7 @@ profile=${2:-core}
 export PROFILE=$profile
 
 if [[ "${APPLY:-false}" == true ]]; then
-  if ! git diff --quiet || ! git diff --cached --quiet; then
+  if [[ -n "$(git status --porcelain --untracked-files=normal)" ]]; then
     printf 'live apply requires a clean working tree so gate evidence matches reviewed source\n' >&2
     exit 1
   fi

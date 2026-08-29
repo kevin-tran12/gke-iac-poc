@@ -93,7 +93,7 @@ func TestGateEvidenceUsesCumulativeSourceDigests(t *testing.T) {
 		"git merge-base --is-ancestor", ".source_digest // empty", "layer-source-digest.sh")
 	requireContains(t, "scripts/gates/record-result.sh", "source_digest", "layer-source-digest.sh")
 	requireContains(t, "scripts/gates/run-layer.sh",
-		"live apply requires a clean working tree", "git diff --quiet", "git diff --cached --quiet")
+		"live apply requires a clean working tree", "git status --porcelain --untracked-files=normal")
 }
 
 func TestLayer02NetworkIsPrivateByDefault(t *testing.T) {
