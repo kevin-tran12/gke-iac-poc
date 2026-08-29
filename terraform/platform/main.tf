@@ -157,7 +157,7 @@ resource "google_storage_bucket_iam_member" "api_results" {
 
 resource "google_storage_bucket_iam_member" "api_bucket_metadata" {
   bucket = google_storage_bucket.results.name
-  role   = "roles/storage.legacyBucketReader"
+  role   = "roles/storage.bucketViewer"
   member = google_service_account.api.member
 }
 
@@ -183,7 +183,6 @@ resource "google_project_iam_member" "cloud_build_roles" {
   for_each = toset([
     "roles/artifactregistry.writer",
     "roles/logging.logWriter",
-    "roles/storage.objectViewer",
   ])
   project = var.project_id
   role    = each.value
@@ -193,6 +192,12 @@ resource "google_project_iam_member" "cloud_build_roles" {
 resource "google_storage_bucket_iam_member" "cloud_build_evidence" {
   bucket = google_storage_bucket.results.name
   role   = "roles/storage.objectCreator"
+  member = google_service_account.cloud_build.member
+}
+
+resource "google_storage_bucket_iam_member" "cloud_build_source" {
+  bucket = google_storage_bucket.results.name
+  role   = "roles/storage.objectViewer"
   member = google_service_account.cloud_build.member
 }
 
