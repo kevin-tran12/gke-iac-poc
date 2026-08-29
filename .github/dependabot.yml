@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /app
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: [dependencies, go]
+  - package-ecosystem: terraform
+    directories:
+      - /terraform/bootstrap
+      - /terraform/network
+      - /terraform/platform
+      - /terraform/cluster
+      - /terraform/addons
+      - /terraform/workloads
+      - /terraform/delivery
+      - /terraform/edge
+      - /terraform/recovery
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    labels: [dependencies, terraform]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: [dependencies, ci]
+  - package-ecosystem: docker
+    directory: /app
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    labels: [dependencies, containers]

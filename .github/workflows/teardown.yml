@@ -1,0 +1,47 @@
+name: Teardown lab
+on:
+  workflow_dispatch:
+    inputs:
+      final:
+        description: Also unlink billing and delete the dedicated project
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: gke-lab-live
+  cancel-in-progress: false
+jobs:
+  destroy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    environment: ${{ inputs.final && 'final-delete' || 'destructive-labs' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ./.github/actions/setup-toolchain
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.TERRAFORM_APPLY_SERVICE_ACCOUNT }}
+      - name: Destroy runtime
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
+          TF_VAR_project_number: ${{ vars.GCP_PROJECT_NUMBER }}
+          TF_VAR_region: ${{ vars.GCP_REGION }}
+        run: bash scripts/teardown-runtime.sh
+      - name: Final project deletion
+        if: inputs.final
+        env:
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
+        run: bash scripts/teardown-final.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: teardown-${{ github.sha }}
+          path: test-results/
+          retention-days: 30

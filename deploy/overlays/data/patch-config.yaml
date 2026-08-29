@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gke-lab-config
+data:
+  CLOUD_SQL_CONNECTION_NAME: replace-at-render
+  CLOUD_SQL_USER: replace-at-render
+  CLOUD_SQL_DATABASE: gke_lab

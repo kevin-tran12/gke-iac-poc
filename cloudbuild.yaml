@@ -1,0 +1,47 @@
+steps:
+  - id: unit-tests
+    name: ${_GO_BUILDER_IMAGE}
+    dir: app
+    entrypoint: go
+    args: ["test", "-race", "./..."]
+  - id: build-api
+    name: ${_DOCKER_BUILDER_IMAGE}
+    args: ["build", "--file=app/Dockerfile", "--build-arg=GO_BUILD_IMAGE=${_GO_BUILDER_IMAGE}", "--build-arg=RUNTIME_IMAGE=${_RUNTIME_IMAGE}", "--build-arg=COMPONENT=api", "--tag=${_REGISTRY}/gke-lab-api:${SHORT_SHA}", "app"]
+  - id: build-worker
+    name: ${_DOCKER_BUILDER_IMAGE}
+    args: ["build", "--file=app/Dockerfile", "--build-arg=GO_BUILD_IMAGE=${_GO_BUILDER_IMAGE}", "--build-arg=RUNTIME_IMAGE=${_RUNTIME_IMAGE}", "--build-arg=COMPONENT=worker", "--tag=${_REGISTRY}/gke-lab-worker:${SHORT_SHA}", "app"]
+  - id: build-migrate
+    name: ${_DOCKER_BUILDER_IMAGE}
+    args: ["build", "--file=app/Dockerfile", "--build-arg=GO_BUILD_IMAGE=${_GO_BUILDER_IMAGE}", "--build-arg=RUNTIME_IMAGE=${_RUNTIME_IMAGE}", "--build-arg=COMPONENT=migrate", "--tag=${_REGISTRY}/gke-lab-migrate:${SHORT_SHA}", "app"]
+  - id: api-sbom
+    name: ${_SYFT_IMAGE}
+    args: ["docker:${_REGISTRY}/gke-lab-api:${SHORT_SHA}", "-o", "spdx-json=api-sbom.spdx.json"]
+  - id: worker-sbom
+    name: ${_SYFT_IMAGE}
+    args: ["docker:${_REGISTRY}/gke-lab-worker:${SHORT_SHA}", "-o", "spdx-json=worker-sbom.spdx.json"]
+  - id: migrate-sbom
+    name: ${_SYFT_IMAGE}
+    args: ["docker:${_REGISTRY}/gke-lab-migrate:${SHORT_SHA}", "-o", "spdx-json=migrate-sbom.spdx.json"]
+images:
+  - ${_REGISTRY}/gke-lab-api:${SHORT_SHA}
+  - ${_REGISTRY}/gke-lab-worker:${SHORT_SHA}
+  - ${_REGISTRY}/gke-lab-migrate:${SHORT_SHA}
+artifacts:
+  objects:
+    location: gs://${_EVIDENCE_BUCKET}/builds/${BUILD_ID}/
+    paths:
+      - api-sbom.spdx.json
+      - worker-sbom.spdx.json
+      - migrate-sbom.spdx.json
+options:
+  logging: CLOUD_LOGGING_ONLY
+  requestedVerifyOption: VERIFIED
+  machineType: E2_STANDARD_2
+timeout: 1200s
+substitutions:
+  _REGISTRY: us-central1-docker.pkg.dev/replace/gke-lab-containers
+  _GO_BUILDER_IMAGE: us-central1-docker.pkg.dev/replace/gke-lab-containers/go-builder@sha256:replace
+  _DOCKER_BUILDER_IMAGE: gcr.io/cloud-builders/docker@sha256:replace
+  _RUNTIME_IMAGE: gcr.io/distroless/static-debian12:nonroot@sha256:replace
+  _SYFT_IMAGE: us-central1-docker.pkg.dev/replace/gke-lab-containers/syft@sha256:replace
+  _EVIDENCE_BUCKET: replace-job-results

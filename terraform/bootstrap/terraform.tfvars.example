@@ -1,0 +1,5 @@
+project_id           = "replace-with-globally-unique-project-id"
+billing_account      = "000000-000000-000000"
+github_owner_id      = "replace-with-numeric-owner-id"
+github_repository_id = "replace-with-numeric-repository-id"
+budget_amount_usd    = 75

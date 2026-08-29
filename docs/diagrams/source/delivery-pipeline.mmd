@@ -1,0 +1,21 @@
+sequenceDiagram
+  participant GH as GitHub Actions
+  participant CB as Cloud Build
+  participant AR as Artifact Registry
+  participant BA as Binary Authorization
+  participant CD as Cloud Deploy
+  participant ST as GKE staging
+  participant PR as GKE production
+  GH->>CB: Submit tested commit
+  CB->>CB: Go tests + container builds + SBOM
+  CB->>AR: Push immutable images
+  CB-->>GH: Verified build, digests, SBOM and provenance
+  GH->>BA: Create KMS-backed attestations
+  GH->>CD: Create release with digests
+  CD->>ST: Render and deploy
+  ST-->>CD: Verification result
+  CD-->>GH: Await production approval
+  GH->>CD: Approve rollout
+  CD->>PR: Deploy same digests
+  GH->>BA: Temporary enforce/deny/allow lab, then disable
+  PR-->>CD: Post-deploy verification

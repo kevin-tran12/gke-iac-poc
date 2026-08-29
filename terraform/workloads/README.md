@@ -1,13 +1,7 @@
-# Workload Terraform root
+# Layer 6: internal workloads
 
-This root will manage Kubernetes-native resources after the GKE API is reachable:
-
-- an isolated test namespace and security policies;
-- echo, hello-app, and HPA Deployments and Services;
-- an `autoscaling/v2` HorizontalPodAutoscaler;
-- bounded load-generator Jobs; and
-- optional Gateway API and Cloud Armor integration resources.
-
-The Kubernetes provider is sufficient for the baseline. The Helm provider will be
-added only if a concrete chart becomes necessary.
-
+Creates restricted namespaces, quotas, limit ranges, default-deny policies,
+Workload Identity service accounts, the echo/hello/HPA demonstrations, and the
+small Persistent Disk recovery workload. All images are required inputs with
+immutable digests. Internal ClusterIP contract tests must pass before the edge
+root can reserve an address or create a load balancer.

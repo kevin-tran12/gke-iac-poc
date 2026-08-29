@@ -1,0 +1,28 @@
+apiVersion: skaffold/v4beta13
+kind: Config
+metadata:
+  name: gke-lab
+manifests:
+  kustomize:
+    paths:
+      - deploy/overlays/staging
+deploy:
+  kubectl: {}
+verify:
+  - name: rollout-health
+    container:
+      name: kubectl
+      image: gke-lab-verifier
+      command: ["sh"]
+      args: ["-c", "kubectl wait --all-namespaces --for=condition=complete job/gke-lab-smoke --timeout=10m"]
+profiles:
+  - name: production
+    manifests:
+      kustomize:
+        paths:
+          - deploy/overlays/production
+  - name: data
+    manifests:
+      kustomize:
+        paths:
+          - deploy/overlays/data

@@ -1,0 +1,66 @@
+flowchart TB
+  Reviewer[Recruiter / technical manager] --> GitHub[GitHub repository, CI and evidence]
+  Engineer[Engineer in Dev Container] --> GitHub
+  GitHub -->|OIDC| WIF[Workload Identity Federation]
+  WIF --> Terraform[Layered Terraform]
+  GitHub --> Build[Cloud Build]
+  Build --> Registry[Artifact Registry]
+  Build --> Provenance[SBOM, provenance and attestation]
+  Provenance --> BinAuth[Binary Authorization]
+  Build --> Deploy[Cloud Deploy]
+
+  subgraph GCP[Dedicated ephemeral Google Cloud project]
+    subgraph Net[Custom VPC]
+      Subnet[Private GKE subnet + Pod/Service ranges]
+      PGA[Private Google Access]
+      Flow[VPC Flow Logs]
+      NAT[Optional Cloud NAT]
+      PSA[Private Service Access]
+    end
+    subgraph Cluster[Private GKE Standard]
+      System[On-demand system pool]
+      Spot[Optional Spot app pool]
+      Policy[Dataplane V2, RBAC, PSA, quotas, PDBs]
+      OTel[OpenTelemetry + Managed Prometheus]
+      Staging[Staging API + worker]
+      Production[Production API + worker]
+      Echo[HTTP/HTTPS echo]
+      Hello[GKE hello-app]
+      HPA[HPA CPU example]
+      Stateful[StatefulSet + Persistent Disk]
+    end
+    Edge[Global GKE Gateway / load balancer]
+    Armor[Cloud Armor]
+    Secrets[Secret Manager]
+    PubSub[Pub/Sub + DLQ]
+    Results[GCS results]
+    PrivateDNS[Cloud DNS private zone]
+    SQL[Optional Cloud SQL PostgreSQL]
+    Backup[Optional Backup for GKE]
+    Ops[Logging, Monitoring and Trace]
+  end
+
+  Deploy --> Staging
+  Deploy -->|approved promotion| Production
+  BinAuth -. admission .-> Policy
+  DNS[nip.io temporary DNS] --> Edge
+  ACME[Let's Encrypt] --> Cert[cert-manager]
+  Cert --> Edge
+  Armor --> Edge
+  Edge --> Production
+  Edge --> Echo
+  Edge --> Hello
+  Production --> PubSub
+  Staging --> PubSub
+  PubSub --> Staging
+  PubSub --> Production
+  Staging --> Results
+  Production --> Results
+  Staging --> Secrets
+  Production --> Secrets
+  Production -. data profile .-> SQL
+  PSA --> SQL
+  Stateful -. recovery profile .-> Backup
+  Cluster --> Ops
+  OTel --> Ops
+  Subnet --> PrivateDNS

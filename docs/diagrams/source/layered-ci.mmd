@@ -1,0 +1,16 @@
+flowchart TB
+  PR[Pull request] --> Static[Read-only static CI]
+  Static --> Unit[Go / Terraform / manifest / policy tests]
+  Unit --> Aggregate[Required ci/all-required status]
+  Aggregate -->|fail| Block[Block merge]
+  Aggregate -->|pass| Main[Protected main]
+  Main --> Approval{Protected environment required?}
+  Approval --> OIDC[GitHub OIDC -> Google WIF]
+  OIDC --> Apply[Apply current layer only]
+  Apply --> Contract[Live contract + negative tests]
+  Contract --> Cleanup[Cleanup / rollback test]
+  Cleanup --> Record[Commit-bound gate record]
+  Record --> Next[Next layer can verify prerequisite]
+  Apply -->|failure| Evidence[Diagnostics and evidence]
+  Contract -->|failure| Evidence
+  Evidence --> Stop[Stop all downstream layers]

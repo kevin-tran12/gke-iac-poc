@@ -1,0 +1,47 @@
+name: Failure lab result
+description: Record a repeatable break/fix/recovery exercise
+title: "lab: "
+labels: [failure-lab]
+body:
+  - type: input
+    id: commit
+    attributes:
+      label: Commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Layer
+      options: [network, platform, cluster, addons, workloads, delivery, edge, recovery]
+    validations:
+      required: true
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis and expected signal
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Observed failure, user impact, recovery, and durable outcome
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence paths
+    validations:
+      required: true
+  - type: checkboxes
+    id: cleanup
+    attributes:
+      label: Cleanup
+      options:
+        - label: Recovery trap completed
+          required: true
+        - label: Baseline was re-tested
+          required: true
+        - label: No secret, token, project number, or personal data is attached
+          required: true

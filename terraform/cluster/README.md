@@ -1,12 +1,10 @@
-# Cluster Terraform root
+# Layer 4: private GKE
 
-This root will own Google Cloud APIs, IAM, networking, the controlled container
-registry path, GKE, and opt-in billable networking resources.
+Creates GKE Standard with private nodes, a DNS-only control-plane endpoint,
+Dataplane V2, Cloud DNS, Workload Identity, managed Prometheus, a one-node
+on-demand system pool, and a zero-to-three-node Spot application pool.
 
-Provider versions and the Terraform CLI requirement will be selected from current
-compatible releases, constrained in `versions.tf`, and recorded in the committed
-`.terraform.lock.hcl`. No provider version has been assumed in the scaffold.
-
-Planned outputs are limited to the values needed by the workload root. Long-lived
-tokens, service-account keys, and private credentials must not be stored in state.
+The zonal profile is the default. The regional profile changes only cluster
+location and scheduling tests. Binary Authorization remains disabled until a
+signed image has passed the delivery gate.
 

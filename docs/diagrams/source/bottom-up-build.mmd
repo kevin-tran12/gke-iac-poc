@@ -1,0 +1,20 @@
+flowchart LR
+  L0[0 Tooling CI] --> L1[1 Bootstrap]
+  L1 --> L2[2 Network]
+  L2 --> L3[3 Platform]
+  L3 --> L4[4 Private GKE]
+  L4 --> L5[5 Addons / policy]
+  L5 --> L6[6 Internal workloads]
+  L6 --> L7[7 Staging delivery]
+  L7 --> A1{Public-edge approval}
+  A1 --> L8[8 Gateway / TLS / Armor]
+  L7 --> A2{Production approval}
+  A2 --> P[Promote verified release]
+  L8 --> A3{Paid recovery approval}
+  A3 --> L9[9 Backup / restore]
+  L9 --> A4{Destructive-lab approval}
+  A4 --> F1[Break / recover]
+  F1 --> T[Evidence / teardown]
+  F[Gate failure] --> D[Collect diagnostics]
+  D --> R[Repair and retry same layer]
+  D --> B[Destroy current layer]

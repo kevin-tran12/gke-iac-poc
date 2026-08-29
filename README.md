@@ -1,43 +1,88 @@
-# GKE Infrastructure-as-Code Proof of Concept
+# GKE Cloud Engineering Lab
 
-This repository is a standalone, disposable proof of concept for validating a
-Google Kubernetes Engine cluster and its networking and autoscaling behavior.
-Terraform will own all cloud and Kubernetes resources; no manual `kubectl apply`
-steps will be required.
+> **Ephemeral portfolio project:** this repository is the durable artifact. The
+> Google Cloud environment is created only for a documented demonstration and is
+> destroyed after evidence is collected.
 
-## Demonstrations
+This project demonstrates how to design, provision, secure, observe, test, break,
+recover, and remove a Google Kubernetes Engine platform. It is built bottom-up:
+every layer ships with continuous integration, a live contract test, a negative
+test, evidence collection, and a cleanup check before the next layer is allowed to
+run.
 
-1. Gateway or Ingress routing, forwarded headers, and client-side TLS validation
-   with a request-echo workload.
-2. Kubernetes Service routing across multiple ready Pods with Google's GKE
-   `hello-app` sample.
-3. Horizontal Pod Autoscaler behavior under bounded CPU load, with a separate
-   assertion for GKE node autoscaling when that scenario is enabled.
+![GKE architecture](docs/diagrams/rendered/gcp-architecture.svg)
 
-## Safety principles
+## What this proves
 
-- Keep the environment ephemeral and make teardown part of every automated run.
-- Disable public load balancing, Cloud Armor, Cloud NAT, and load generation by
-  default; each must be an explicit opt-in.
-- Pin providers in Terraform and container images by digest.
-- Never send credentials, cookies, tokens, or real user data to the echo service.
-- Set resource requests, limits, replica caps, node caps, and test timeouts.
-- Use short-lived Google credentials and least-privilege service accounts.
-- Treat `kubectl` as an observation and verification tool, not a resource manager.
+| Capability | Demonstration |
+| --- | --- |
+| Infrastructure as code | Layered Terraform state, reusable modules, drift-safe plans, and reverse-order teardown |
+| Cloud networking | Private GKE nodes, VPC-native ranges, Private Google Access, Gateway API, TLS, Cloud Armor, and an opt-in NAT lab |
+| Kubernetes operations | Workload Identity, Dataplane V2, policies, HPA, cluster autoscaling, PDBs, upgrades, and recovery |
+| Software supply chain | Cloud Build, Artifact Registry, SBOM/provenance, Binary Authorization, and digest-only deployments |
+| Delivery engineering | Cloud Deploy progression from staging to production with verification and approval |
+| Reliability | Pub/Sub redelivery, idempotent GCS writes, optional Cloud SQL recovery, Backup for GKE, and controlled failure labs |
+| Operations | Structured logs, metrics, traces, dashboards, alerts, runbooks, evidence, cost controls, and zero-resource verification |
 
-## Repository layout
+## Build order
 
 ```text
-docs/                  Architecture, decisions, costs, and runbooks
-terraform/cluster/     Google Cloud, networking, registry, and GKE resources
-terraform/workloads/   Kubernetes workloads and optional Gateway resources
-tests/                 Automated end-to-end verification
+tooling -> bootstrap -> network -> platform -> private GKE -> addons/policies
+        -> internal workloads -> signed staging delivery -> public edge
+        -> optional recovery profile -> failure labs -> teardown verification
 ```
 
-## Status
+Production promotion is an explicit protected action after staging verification,
+not an automatic side effect of provisioning.
 
-The repository structure and design baseline are established. No Google Cloud
-resources or Terraform configuration have been created yet. Before implementation,
-the project, region, cluster mode, control-plane access, DNS/TLS approach, state
-backend, and maximum acceptable test cost must be selected.
+CI validates each layer as it is introduced. `provision-through-layer` cannot
+skip a missing, stale, failed, or expired prerequisite gate. Public, paid,
+production, destructive, and final-delete stages use protected GitHub
+environments.
 
+## Quick navigation
+
+- [Executive case study](docs/executive-summary.md)
+- [Architecture](docs/architecture.md)
+- [Repository map](docs/repository-map.md)
+- [Bottom-up build and CI gates](docs/build-order.md)
+- [Service catalog](docs/service-catalog.md)
+- [Security model](docs/security-model.md)
+- [Testing and failure labs](docs/test-strategy.md)
+- [Public test-image choices](docs/public-test-images.md)
+- [Cost and teardown](docs/cost-and-teardown.md)
+- [Sanitized evidence index](evidence/index.md)
+- [Recruiter walkthrough](docs/recruiter-walkthrough.md)
+- [Interview talking points](docs/interview-talking-points.md)
+
+## Operator interface
+
+Run the project from its Dev Container. The Make targets are intentionally small
+wrappers over inspectable scripts:
+
+```bash
+make validate
+make hooks
+make layer LAYER=1
+make test-layer LAYER=1
+make provision-through LAYER=7 PROFILE=core
+make lab NAME=image-pull-failure
+make evidence
+make teardown-runtime
+make verify-zero-cost
+make teardown-final
+```
+
+`make test-layer` is the development loop. The pre-push hook runs all local
+layers, and GitHub Actions repeats those exact shared checks before any protected
+live integration can authenticate to Google Cloud.
+
+Normal provisioning and delivery never require a manual `kubectl apply`.
+`kubectl` is used for observation and tightly bounded failure injection only.
+
+## Current status
+
+The repository implements the platform, application, test, CI, documentation,
+and teardown contracts. A live run still requires a dedicated GCP project,
+billing-account selection, GitHub environment approvals, and repository-specific
+image digests. Those values are deliberately not committed.

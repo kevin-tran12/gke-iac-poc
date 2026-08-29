@@ -1,0 +1,13 @@
+flowchart LR
+  Recovery[1 Recovery plans] --> Edge[2 Gateway / Armor / IP]
+  Edge --> Delivery[3 Delivery / attestor]
+  Delivery --> Workloads[4 Workloads / PVC]
+  Workloads --> Addons[5 Addons]
+  Addons --> Cluster[6 GKE / node pools]
+  Cluster --> Platform[7 Registry / data / SQL]
+  Platform --> Network[8 NAT / VPC]
+  Network --> Verify[9 Independent resource inventory]
+  Verify --> Final{Final teardown?}
+  Final -->|yes| State[Delete remote state]
+  State --> Billing[Unlink billing]
+  Billing --> Project[Delete project]

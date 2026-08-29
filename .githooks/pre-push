@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf 'Running all bottom-up local gates before push...\n'
+bash scripts/ci/test-all-layers.sh

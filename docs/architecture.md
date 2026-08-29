@@ -1,110 +1,68 @@
-# Architecture baseline
+# Architecture
 
-## Objective
+## Design objective
 
-Create a repeatable GKE demonstration that proves three different behaviors:
+The system is a disposable cloud-engineering laboratory. It demonstrates a
+secure platform and a credible operational lifecycle, not continuous product
+availability. Google Cloud hosts the runtime; GitHub contains the durable design,
+code, sanitized evidence, and incident history.
 
-- external request routing and TLS termination;
-- Service routing across healthy Pod endpoints; and
-- workload HPA scaling, optionally followed by node-pool scaling.
+## Resource and state boundaries
 
-This is functional validation, not a production hosting platform or performance
-benchmark.
+Terraform roots are deliberately ordered:
 
-## Provisioning boundaries
+1. `bootstrap`: project, APIs, budget, state bucket, GitHub WIF.
+2. `network`: VPC, private subnet, alias ranges, Private Google Access, optional NAT.
+3. `platform`: registry, build identity, Pub/Sub, GCS, secrets, optional SQL.
+4. `cluster`: private GKE, node pools, Workload Identity, Dataplane V2.
+5. `addons`: cert-manager and OpenTelemetry.
+6. `workloads`: namespaces, policies, public test workloads, recovery PVC.
+7. `delivery`: Cloud Deploy, KMS attestor, Binary Authorization policy.
+8. `edge`: address, Gateway, TLS, Cloud Armor, routes.
+9. `recovery`: Backup for GKE and restore plan.
 
-```text
-Terraform: cluster root
-  -> APIs, IAM, VPC/subnet, Artifact Registry, GKE, optional cost controls
-  -> outputs a reachable and authenticated Kubernetes API endpoint
+The boundaries prevent Kubernetes providers from initializing before GKE exists,
+keep public and paid services approval-gated, and make reverse-order teardown
+deterministic. Cloud Deploy owns Go application Deployments; Terraform owns
+namespaces, policy, add-ons, infrastructure, and test workloads.
 
-Terraform: workloads root
-  -> namespace, policies, Deployments, Services, HPA, load Jobs
-  -> optional Gateway and Cloud Armor integration
+## Application data flow
 
-Automated tests
-  -> inspect durable Kubernetes state and make bounded HTTP requests
-  -> always trigger Terraform teardown
-```
+1. The authenticated API validates a maximum 4 KiB synthetic payload.
+2. It creates a UUID and publishes the versioned message to Pub/Sub.
+3. The worker obtains a non-sensitive salt from Secret Manager through GKE
+   Workload Identity and computes a deterministic digest.
+4. It creates `results/<job-id>.json` in GCS with a `DoesNotExist` precondition.
+5. Duplicate delivery observes the existing object and acknowledges without a
+   second logical result.
+6. The optional data profile upserts audit/status metadata into private Cloud SQL
+   using the Cloud SQL Go Connector and automatic IAM database authentication.
+7. Logs, metrics, and traces flow to Google Cloud Observability through the
+   OpenTelemetry Collector without recording payloads or credentials.
 
-The roots remain separate so the Kubernetes provider never has to initialize
-before its cluster exists and so a failed workload deployment does not obscure
-cluster teardown.
+## External request flow
 
-## Test workloads
+`client -> nip.io DNS -> global IP -> Cloud Armor -> GKE Gateway -> Service -> Pod`
 
-| Workload | Purpose | Baseline image reference |
-| --- | --- | --- |
-| Request echo | Inspect safe test headers, path, host, and proxy metadata | `mendhak/http-https-echo` through a controlled registry, pinned by digest |
-| GKE hello app | Observe multiple Pod hostnames through one Service | `us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0`, pinned by digest |
-| HPA example | Produce bounded CPU pressure for HPA testing | `registry.k8s.io/hpa-example`, pinned by digest |
+HTTP redirects to HTTPS. cert-manager completes Let's Encrypt HTTP-01 through the
+Gateway. `/echo`, `/hello`, and the API route to separate Services. Cross-namespace
+backends require explicit ReferenceGrants. `nip.io` supplies temporary DNS only;
+it does not host the service.
 
-Third-party images must not be pulled directly by isolated nodes. The preferred
-path is a same-region Artifact Registry remote or standard repository with narrow
-reader access and cleanup policies. Cloud NAT is an explicit, billable fallback.
+## Scaling model
 
-## Acceptance criteria
+The one-node on-demand pool hosts system components. Application Pods tolerate a
+zero-to-three-node Spot pool but may fall back to the system pool. HPA uses CPU
+utilization and is tested separately from node autoscaling. Replica and node caps,
+load duration, and namespace quotas bound the experiment.
 
-### Gateway, headers, and TLS
+## Recovery model
 
-- An external client validates the certificate chain, hostname, and expiration.
-- Plain HTTP redirects to HTTPS when HTTP is enabled.
-- A unique, non-sensitive test header reaches the echo Pod as expected.
-- The observed forwarding chain matches the selected GKE data-plane behavior.
-- A Cloud Armor test, when enabled, proves blocked requests never reach the Pod.
-- No credential, cookie, authorization header, environment variable, or real user
-  payload appears in responses or logs.
+The worker's source message remains durable until acknowledgement. GCS generation
+preconditions provide idempotency. A small StatefulSet proves Persistent Disk
+backup and restore. The SQL profile proves automated backup and PITR. The regional
+profile tests topology and PDB behavior without becoming the default deployment.
 
-### Service routing
-
-- Every desired hello-app Pod becomes Ready.
-- The Service has the expected ready endpoints.
-- Automated requests using new connections observe at least two distinct Pod
-  hostnames when two or more replicas are configured.
-- Removing or failing one test Pod does not route requests to an unready endpoint.
-
-### Autoscaling
-
-- CPU requests and limits are explicit.
-- A bounded load Job causes HPA desired and current replicas to increase within a
-  defined timeout, without exceeding the configured maximum.
-- Replicas become Ready and later return to the configured minimum.
-- If cluster autoscaling is in scope, resource pressure makes an additional node
-  necessary and the test separately proves the node count increased.
-- Load generation terminates even when an assertion fails.
-
-## Cost boundaries
-
-- Use a zonal or Autopilot cluster only after confirming that the billing account's
-  GKE management-fee credit is still available.
-- Keep public Gateway, Cloud Armor, Cloud NAT, and load tests disabled by default.
-- Cap HPA replicas and node-pool size with small, explicit values.
-- Co-locate GKE and Artifact Registry and limit cached image versions.
-- Estimate the selected machine, disk, load-balancer, Armor, NAT, logging, and data
-  transfer costs before the first apply.
-- Budgets and alerts are detection controls; automated teardown and hard scaling
-  limits are the primary safeguards.
-
-## Credible failure modes
-
-| Failure | Expected detection and recovery |
-| --- | --- |
-| Private nodes cannot pull an image | Test fails on `ImagePullBackOff`; correct registry access or controlled egress, then retry |
-| Terraform cannot reach the control plane | Workload root fails before mutation; correct endpoint reachability and short-lived authentication |
-| HPA reports unknown metrics | Fail with a clear timeout; verify metrics availability and CPU requests |
-| HPA Pods remain Pending | Report scheduler and autoscaler events; verify node cap and allocatable capacity |
-| Gateway or certificate remains pending | Fail after a bounded timeout and destroy billable resources |
-| Load Job or test runner fails | Job deadline and CI cleanup still stop load and destroy infrastructure |
-| Terraform destroy is incomplete | Run the documented recovery procedure and verify no load balancer, NAT, IP, disk, node, or cluster remains |
-
-## Decisions still required
-
-- Google Cloud project and billing account.
-- Region and zone.
-- Standard versus Autopilot GKE.
-- DNS-based or IP-based control-plane access for the Terraform runner.
-- Internal-only versus public Gateway demonstration.
-- Domain and certificate method for TLS.
-- Local or remote Terraform state.
-- Maximum cost and maximum environment lifetime per run.
+See the [service catalog](service-catalog.md), [security model](security-model.md),
+and [full diagram source](diagrams/source/gcp-architecture.mmd).
 
