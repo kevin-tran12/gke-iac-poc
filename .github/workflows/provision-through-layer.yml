@@ -1,16 +1,22 @@
-name: Provision through layer
+name: Operate one live layer
 on:
   workflow_dispatch:
     inputs:
       layer:
-        description: Last layer to provision; prerequisites still run in order
+        description: One layer to plan, apply, or verify
         required: true
         type: choice
-        options: ["2", "3", "4", "5", "6", "7", "8", "9"]
+        options: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
       profile:
+        description: Root-specific profile
         required: true
         type: choice
-        options: [core, data, recovery, ha, egress]
+        options: [core, data, recovery, ha, egress, full]
+      operation:
+        description: Run exactly one lifecycle operation
+        required: true
+        type: choice
+        options: [plan, apply, verify]
 permissions:
   contents: read
   id-token: write
@@ -18,43 +24,10 @@ concurrency:
   group: gke-lab-live
   cancel-in-progress: false
 jobs:
-  provision:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 180
-    environment: ${{ inputs.layer == '8' && 'public-edge' || inputs.profile != 'core' && 'paid-profile' || 'cloud-apply' }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/setup-toolchain
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          project_id: ${{ vars.GCP_PROJECT_ID }}
-          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-          service_account: ${{ vars.TERRAFORM_APPLY_SERVICE_ACCOUNT }}
-      - name: Run every prerequisite
-        env:
-          APPLY: "true"
-          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
-          TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
-          TF_VAR_project_number: ${{ vars.GCP_PROJECT_NUMBER }}
-          TF_VAR_region: ${{ vars.GCP_REGION }}
-          TF_VAR_acme_email: ${{ vars.ACME_EMAIL }}
-          TF_VAR_echo_image: ${{ vars.ECHO_IMAGE }}
-          TF_VAR_hello_image: ${{ vars.HELLO_IMAGE }}
-          TF_VAR_hpa_image: ${{ vars.HPA_IMAGE }}
-          TF_VAR_recovery_image: ${{ vars.RECOVERY_IMAGE }}
-          TF_VAR_otel_collector_image: ${{ vars.OTEL_COLLECTOR_IMAGE }}
-          TF_VAR_cert_manager_images: ${{ vars.CERT_MANAGER_IMAGES_JSON }}
-          GO_BUILDER_IMAGE: ${{ vars.GO_BUILDER_IMAGE }}
-          DOCKER_BUILDER_IMAGE: ${{ vars.DOCKER_BUILDER_IMAGE }}
-          RUNTIME_IMAGE: ${{ vars.RUNTIME_IMAGE }}
-          SYFT_IMAGE: ${{ vars.SYFT_IMAGE }}
-          SMOKE_IMAGE: ${{ vars.SMOKE_IMAGE }}
-          VERIFIER_IMAGE: ${{ vars.VERIFIER_IMAGE }}
-          LOAD_IMAGE: ${{ vars.LOAD_IMAGE }}
-        run: bash scripts/provision-through-layer.sh "${{ inputs.layer }}" "${{ inputs.profile }}"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: provision-through-${{ inputs.layer }}-${{ github.sha }}
-          path: test-results/live/
-          retention-days: 14
+  layer:
+    uses: ./.github/workflows/integration-layer.yml
+    with:
+      layer: ${{ fromJSON(inputs.layer) }}
+      profile: ${{ inputs.profile }}
+      operation: ${{ inputs.operation }}
+      approval_environment: ${{ inputs.operation == 'plan' && 'cloud-plan' || inputs.layer == '8' && 'public-edge' || inputs.profile != 'core' && 'paid-profile' || 'cloud-apply' }}

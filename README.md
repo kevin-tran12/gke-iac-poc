@@ -35,10 +35,10 @@ tooling -> bootstrap -> network -> platform -> private GKE -> addons/policies
 Production promotion is an explicit protected action after staging verification,
 not an automatic side effect of provisioning.
 
-CI validates each layer as it is introduced. `provision-through-layer` cannot
-skip a missing, stale, failed, or expired prerequisite gate. Public, paid,
-production, destructive, and final-delete stages use protected GitHub
-environments.
+CI validates each layer as it is introduced. The protected live workflow runs
+exactly one plan, apply, or verify operation and cannot skip a missing, stale,
+failed, or expired prerequisite gate. Public, paid, production, destructive,
+and final-delete stages use protected GitHub environments.
 
 ## Quick navigation
 
@@ -63,9 +63,11 @@ wrappers over inspectable scripts:
 ```bash
 make validate
 make hooks
-make layer LAYER=1
 make test-layer LAYER=1
-make provision-through LAYER=7 PROFILE=core
+make plan-layer LAYER=1 PROFILE=core
+make apply-layer LAYER=1 PROFILE=core
+make verify-layer LAYER=1 PROFILE=core
+CONFIRM_DESTROY=layer-2 make destroy-layer LAYER=2 PROFILE=core
 make lab NAME=image-pull-failure
 make evidence
 make teardown-runtime
@@ -73,9 +75,15 @@ make verify-zero-cost
 make teardown-final
 ```
 
-`make test-layer` is the development loop. The pre-push hook runs all local
-layers, and GitHub Actions repeats those exact shared checks before any protected
-live integration can authenticate to Google Cloud.
+`make test-layer` is the development loop. Planning never applies or publishes
+a passing live gate. After reviewing the saved plan and its manifest,
+`make apply-layer` applies that exact plan; `make verify-layer` runs the live
+contract and rejects post-apply drift. A prerequisite is reusable only when its
+gate status is `verified`.
+
+Bulk provision-through and full-lab apply are disabled while the platform is
+being hardened. Each layer is implemented, tested, reviewed, merged, and live
+verified before work begins on the next layer.
 
 The Dev Container image bakes in the pinned security tools so Docker can reuse
 that build layer. Named volumes persist GitHub CLI and Google Cloud CLI
@@ -84,6 +92,10 @@ plugins, and Trivy policies across ordinary container rebuilds. Use **Rebuild
 Container** to retain Docker's build cache; **Rebuild Container Without Cache**
 intentionally downloads everything again. Deleting the named volumes also
 removes their cached data and CLI logins.
+
+Run `bash scripts/check-devcontainer.sh --require-auth` after a rebuild to verify
+the complete command set, persistent volumes, GitHub CLI login, and gcloud
+Application Default Credentials.
 
 Normal provisioning and delivery never require a manual `kubectl apply`.
 `kubectl` is used for observation and tightly bounded failure injection only.

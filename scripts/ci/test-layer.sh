@@ -18,6 +18,7 @@ if (( layer == 0 )); then
   kubectl kustomize deploy/overlays/production >/dev/null
   kubectl kustomize deploy/overlays/data >/dev/null
   find scripts tests/labs .githooks -type f -name '*.sh' -print0 | xargs -0 -r shellcheck
+  bash tests/gates/evidence-workflow.sh
   bash scripts/check-docs.sh
   exit 0
 fi

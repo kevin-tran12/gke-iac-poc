@@ -4,6 +4,7 @@ on:
     inputs:
       layer: { type: number, required: true }
       profile: { type: string, required: true }
+      operation: { type: string, required: true }
       approval_environment: { type: string, required: true }
 permissions:
   contents: read
@@ -23,11 +24,13 @@ jobs:
         with:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          # Layer 1 replaces this transitional identity with phase-specific
+          # plan/apply identities and prefix-scoped plan storage permissions.
           service_account: ${{ vars.TERRAFORM_APPLY_SERVICE_ACCOUNT }}
-      - name: Run gated layer
+      - name: Run one explicit layer operation
         env:
-          APPLY: "true"
           PROFILE: ${{ inputs.profile }}
+          PLAN_STORE_URI: gs://${{ vars.TF_STATE_BUCKET }}/reviewed-plans
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
           TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
           TF_VAR_project_number: ${{ vars.GCP_PROJECT_NUMBER }}
@@ -46,11 +49,13 @@ jobs:
           SMOKE_IMAGE: ${{ vars.SMOKE_IMAGE }}
           VERIFIER_IMAGE: ${{ vars.VERIFIER_IMAGE }}
           LOAD_IMAGE: ${{ vars.LOAD_IMAGE }}
-        run: bash scripts/gates/run-layer.sh "${{ inputs.layer }}" "${{ inputs.profile }}"
+        run: bash "scripts/gates/${{ inputs.operation }}-layer.sh" "${{ inputs.layer }}" "${{ inputs.profile }}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: gate-layer-${{ inputs.layer }}-${{ github.sha }}
-          path: test-results/live/
+          path: |
+            test-results/live/
+            !test-results/live/*.tfplan
           retention-days: 14
           if-no-files-found: error

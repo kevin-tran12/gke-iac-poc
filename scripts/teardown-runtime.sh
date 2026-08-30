@@ -69,3 +69,12 @@ destroy platform
 destroy network
 
 bash scripts/verify-no-billable-resources.sh | tee test-results/teardown-runtime.txt
+
+lease=.gate-state/environment-lease.json
+if [[ -s $lease ]]; then
+  destroyed=$(date -u +%FT%TZ)
+  jq --arg destroyed_at "$destroyed" '.status = "destroyed" | .destroyed_at = $destroyed_at' \
+    "$lease" >test-results/environment-lease-destroyed.json
+  cp test-results/environment-lease-destroyed.json "$lease"
+  gcloud storage cp "$lease" "gs://${TF_STATE_BUCKET}/gates/environment-lease.json" >/dev/null
+fi

@@ -18,10 +18,14 @@ cache_dirs=(
 for cache_dir in "${cache_dirs[@]}"; do
   sudo chown "$(id -u):$(id -g)" "$cache_dir"
 done
+chmod 700 /home/vscode/.gnupg
+find /home/vscode/.gnupg -type d -exec chmod 700 {} +
+find /home/vscode/.gnupg -type f -exec chmod 600 {} +
 
 printf 'Terraform: %s\n' "$(terraform version -json | jq -r .terraform_version)"
 printf 'Go: %s\n' "$(go version)"
 printf 'kubectl: %s\n' "$(kubectl version --client -o json | jq -r .clientVersion.gitVersion)"
 printf 'Helm: %s\n' "$(helm version --short)"
 printf 'gcloud: %s\n' "$(gcloud version --format=json | jq -r '."Google Cloud SDK"')"
-printf '\nRun make validate before provisioning any layer.\n'
+bash scripts/check-devcontainer.sh --setup
+printf '\nRun bash scripts/check-devcontainer.sh --require-auth before provisioning, then make validate.\n'

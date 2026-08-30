@@ -7,6 +7,7 @@
 ## Local proof before push
 
 - [ ] `make test-layer LAYER=<n>` passed for each changed layer.
+- [ ] Planning, applying, and live verification remain separate operations; no plan-only path records a verified gate.
 - [ ] `make validate` passed in the Dev Container.
 - [ ] Failure, recovery, and teardown paths were updated where behavior changed.
 - [ ] Documentation, diagrams, version inventory, and evidence expectations agree.
