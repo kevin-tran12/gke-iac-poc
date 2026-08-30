@@ -44,6 +44,7 @@ output "enabled_service_catalog" {
   value = local.enabled_services
 }
 
-output "budget_name" {
-  value = google_billing_budget.lab.name
+output "budget_resource_name" {
+  description = "Fully qualified Billing Budget resource name accepted by gcloud."
+  value       = google_billing_budget.lab.id
 }
