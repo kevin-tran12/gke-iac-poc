@@ -16,6 +16,10 @@ a live run, review the source repository, license, vulnerability scan, effective
 user, architecture, and last update. A digest change is a reviewed dependency
 change and must rerun layers 3, 5, and 6.
 
+The generated `test-results/live/mirrored-images.env` file is shell-escaped and
+can be loaded with `set -a; source test-results/live/mirrored-images.env; set +a`.
+It is ignored by Git and must not be committed.
+
 cert-manager is a pinned Helm-chart dependency rather than a portfolio image. All
 five chart components are nevertheless mirrored by digest because private nodes
 have no general egress in the core profile. Chart rendering and webhook health

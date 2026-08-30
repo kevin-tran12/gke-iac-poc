@@ -113,12 +113,18 @@ func TestLayer03PlatformDurabilityAndLifecycle(t *testing.T) {
 	requireNotContains(t, "terraform/platform/main.tf", "google_secret_manager_secret_version")
 	requireContains(t, "cloudbuild.yaml", "requestedVerifyOption: VERIFIED", "api-sbom", "${_REGISTRY}")
 	requireContains(t, "scripts/build-release.sh", `--gcs-source-staging-dir="gs://${EVIDENCE_BUCKET}/cloud-build-source"`)
+	requireContains(t, "scripts/mirror-public-images.sh",
+		`printf 'TF_VAR_cert_manager_images=%q\n'`, "@${digest}")
 }
 
 func TestLayer04PrivateGKEContract(t *testing.T) {
 	requireContains(t, "terraform/cluster/main.tf",
 		"enable_private_nodes", "ip_endpoints_config", "enabled = false", "ADVANCED_DATAPATH",
 		"GKE_METADATA", "enable_secure_boot", "CHANNEL_STANDARD")
+	requireContains(t, "scripts/gates/test-live-layer.sh",
+		"controlPlaneEndpointsConfig.ipEndpointsConfig.enabled == false",
+		"managedPrometheusConfig.enabled == true", "system-node-pool.json",
+		"spot-node-pool.json", "kubectl wait --for=condition=Ready node")
 }
 
 func TestLayer05AddonsSecurity(t *testing.T) {

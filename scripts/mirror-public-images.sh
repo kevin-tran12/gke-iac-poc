@@ -49,6 +49,6 @@ cert_manager_json=$(jq -cn \
   --arg cainjector "$cainjector" --arg acmesolver "$acmesolver" \
   --arg startupapicheck "$startupapicheck" \
   '{controller:$controller,webhook:$webhook,cainjector:$cainjector,acmesolver:$acmesolver,startupapicheck:$startupapicheck}')
-printf 'TF_VAR_cert_manager_images=%s\n' "$cert_manager_json" | tee -a "$output"
+printf 'TF_VAR_cert_manager_images=%q\n' "$cert_manager_json" | tee -a "$output"
 
 printf 'Review and source %s into the protected GitHub repository variables.\n' "$output"

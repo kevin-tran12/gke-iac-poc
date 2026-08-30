@@ -25,6 +25,42 @@ run "private_gke_contract" {
   }
 
   assert {
+    condition = (
+      google_container_cluster.lab.control_plane_endpoints_config[0].ip_endpoints_config[0].enabled == false &&
+      google_container_cluster.lab.control_plane_endpoints_config[0].dns_endpoint_config[0].allow_external_traffic
+    )
+    error_message = "The control plane must use the IAM-protected DNS endpoint with IP endpoints disabled."
+  }
+
+  assert {
+    condition = (
+      google_container_cluster.lab.networking_mode == "VPC_NATIVE" &&
+      google_container_cluster.lab.workload_identity_config[0].workload_pool == "gke-lab-unit-test.svc.id.goog" &&
+      google_container_cluster.lab.dns_config[0].cluster_dns == "CLOUD_DNS" &&
+      google_container_cluster.lab.gateway_api_config[0].channel == "CHANNEL_STANDARD"
+    )
+    error_message = "VPC-native networking, Workload Identity, Cloud DNS, and the standard Gateway API channel must remain enabled."
+  }
+
+  assert {
+    condition = (
+      google_container_node_pool.system.node_config[0].shielded_instance_config[0].enable_secure_boot &&
+      google_container_node_pool.system.management[0].auto_repair &&
+      google_container_node_pool.system.management[0].auto_upgrade
+    )
+    error_message = "System nodes must disable the insecure kubelet port and retain Shielded VM and managed-lifecycle controls."
+  }
+
+  assert {
+    condition = (
+      google_container_node_pool.spot[0].autoscaling[0].total_min_node_count == 0 &&
+      google_container_node_pool.spot[0].autoscaling[0].total_max_node_count == 3 &&
+      google_container_node_pool.spot[0].node_config[0].spot
+    )
+    error_message = "The application pool must remain Spot and scale from zero to three nodes."
+  }
+
+  assert {
     condition     = google_container_cluster.lab.binary_authorization[0].evaluation_mode == "DISABLED"
     error_message = "Enforcement must stay disabled until the signed-delivery gate."
   }
