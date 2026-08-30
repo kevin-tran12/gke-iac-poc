@@ -6,7 +6,7 @@ source scripts/gates/live/common.sh
 expected_project=${TF_VAR_project_id:?TF_VAR_project_id is required}
 project=$(tf_output bootstrap project_id)
 bucket=$(tf_output bootstrap state_bucket)
-budget_name=$(tf_output bootstrap budget_name)
+budget_resource_name=$(tf_output bootstrap budget_resource_name)
 phase_accounts=$(terraform -chdir=terraform/bootstrap output -json terraform_phase_service_accounts)
 expected_services=$(terraform -chdir=terraform/bootstrap output -json enabled_service_catalog | jq -r 'keys[]')
 project_resource="//cloudresourcemanager.googleapis.com/projects/${project}"
@@ -18,7 +18,7 @@ gcloud projects describe "$project" --format=json |
   tee test-results/live/bootstrap-project.json | jq -e '.lifecycleState == "ACTIVE"' >/dev/null
 gcloud billing projects describe "$project" --format=json |
   tee test-results/live/bootstrap-billing.json | jq -e '.billingEnabled == true' >/dev/null
-gcloud billing budgets describe "$budget_name" --format=json |
+gcloud billing budgets describe "$budget_resource_name" --format=json |
   tee test-results/live/bootstrap-budget.json | jq -e '.amount.specifiedAmount.currencyCode == "USD"' >/dev/null
 
 gcloud services list --project "$project" --enabled --format='value(config.name)' |

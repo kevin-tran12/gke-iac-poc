@@ -68,7 +68,8 @@ func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 		"terraformFoundationStorageControl", "phase_state_prefixes")
 	requireContains(t, "terraform/bootstrap/outputs.tf",
 		"terraform_foundation_service_account", "terraform_cluster_service_account",
-		"terraform_delivery_service_account", "terraform_recovery_service_account")
+		"terraform_delivery_service_account", "terraform_recovery_service_account",
+		"budget_resource_name", "google_billing_budget.lab.id")
 	requireContains(t, "terraform/bootstrap/versions.tf",
 		`alias                 = "billing"`, "billing_project       = var.project_id",
 		"user_project_override = true")
@@ -80,7 +81,8 @@ func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 		"bootstrap-project.json", "enabled_service_catalog", "bootstrap-budget.json",
 		"bootstrap-state-bucket.json", "uniform_bucket_level_access",
 		"public_access_prevention", `== "enforced"`, "--managed-by=user",
-		"policy-intelligence troubleshoot-policy iam", "CAN_ACCESS", "CANNOT_ACCESS")
+		"budget_resource_name", "policy-intelligence troubleshoot-policy iam",
+		"CAN_ACCESS", "CANNOT_ACCESS")
 	requireContains(t, ".github/workflows/integration-layer.yml",
 		"TERRAFORM_FOUNDATION_SERVICE_ACCOUNT", "TERRAFORM_CLUSTER_SERVICE_ACCOUNT",
 		"TERRAFORM_DELIVERY_SERVICE_ACCOUNT", "TERRAFORM_RECOVERY_SERVICE_ACCOUNT")
