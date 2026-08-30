@@ -33,7 +33,13 @@ gcloud storage buckets describe "gs://${bucket}" --format=json |
     (.uniform_bucket_level_access // .iamConfiguration.uniformBucketLevelAccess.enabled) == true and
     (.public_access_prevention // .iamConfiguration.publicAccessPrevention) == "enforced" and
     (.versioning_enabled // .versioning.enabled) == true and
-    ((.soft_delete_policy.retention_duration_seconds // .softDeletePolicy.retentionDurationSeconds // 0) | tonumber) >= 604800
+    ((
+      .soft_delete_policy.retention_duration_seconds //
+      .soft_delete_policy.retentionDurationSeconds //
+      .softDeletePolicy.retention_duration_seconds //
+      .softDeletePolicy.retentionDurationSeconds //
+      0
+    ) | tonumber) >= 604800
   ' >/dev/null
 
 gcloud iam workload-identity-pools providers describe github \

@@ -80,7 +80,8 @@ func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 	requireContains(t, "scripts/gates/live/layer-01.sh",
 		"bootstrap-project.json", "enabled_service_catalog", "bootstrap-budget.json",
 		"bootstrap-state-bucket.json", "uniform_bucket_level_access",
-		"public_access_prevention", `== "enforced"`, "--managed-by=user",
+		"public_access_prevention", ".soft_delete_policy.retentionDurationSeconds",
+		`== "enforced"`, "--managed-by=user",
 		"budget_resource_name", "policy-intelligence troubleshoot-policy iam",
 		"CAN_ACCESS", "CANNOT_ACCESS")
 	requireContains(t, ".github/workflows/integration-layer.yml",
