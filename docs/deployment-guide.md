@@ -19,7 +19,11 @@ Bootstrap is the only local-credential step:
 ```bash
 cp terraform/bootstrap/terraform.tfvars.example terraform/bootstrap/terraform.auto.tfvars
 export BOOTSTRAP_TFVARS="$PWD/terraform/bootstrap/terraform.auto.tfvars"
-APPLY=true make layer LAYER=1
+make test-layer LAYER=1
+make plan-layer LAYER=1 PROFILE=core
+# Review test-results/live/bootstrap.tfplan and bootstrap.plan.json.
+make apply-layer LAYER=1 PROFILE=core
+make verify-layer LAYER=1 PROFILE=core
 export TF_STATE_BUCKET="$(terraform -chdir=terraform/bootstrap output -raw state_bucket)"
 bash scripts/migrate-state.sh
 ```
@@ -44,6 +48,10 @@ workflows or the Make targets one layer at a time. Core layers 2–7 do not need
 Cloud NAT; the public-edge workflow uses the egress profile so cert-manager can
 reach the ACME endpoint.
 
-Do not advance on a failed gate. Diagnose with the matching runbook, retry the
-same layer, or destroy that layer. Do not provision an expensive later layer to
-work around an earlier defect.
+Do not advance until the current layer's PR is merged and its live gate is
+`verified`. Diagnose a failure with the matching runbook, create a fresh plan,
+or destroy that layer in reverse order. Do not provision an expensive later
+layer to work around an earlier defect.
+
+The compatibility command `make layer` is plan-only. `APPLY=true make layer` is
+rejected so a plan-only invocation can never masquerade as successful live proof.

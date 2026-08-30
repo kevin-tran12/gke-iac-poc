@@ -15,7 +15,8 @@ Terraform init without a backend, validate/test, manifest rendering, ShellCheck,
 documentation checks, Actionlint, immutable action-reference enforcement,
 Gitleaks, govulncheck, TFLint with Google rules, Kubeconform, and Trivy IaC
 scanning. GitHub-managed CodeQL default setup separately scans Actions, Go, and
-JavaScript/TypeScript. The aggregate `ci/all-required` check protects `main`.
+JavaScript/TypeScript. A pinned dependency-review job rejects new high-severity
+dependency risk. The aggregate `ci/all-required` check protects `main`.
 
 The pull-request workflow uses a fan-out/fan-in topology. Security and layer 00
 run first as shared prerequisites. After both succeed, static checks for layers
@@ -23,11 +24,18 @@ run first as shared prerequisites. After both succeed, static checks for layers
 their results into one branch-protection check. Local `make test-all` remains
 sequential for readable output and predictable failure diagnosis.
 
-Live integration runs after merge or manual dispatch. It receives short-lived GCP
-credentials through GitHub OIDC, locks one environment at a time, executes only
-the selected Terraform layer, executes that layer's live acceptance test, and
-publishes a gate record only on success. Protected environments approve public
-edge, production, paid, destructive, reaper, and final-delete operations.
+Live integration runs after merge or manual dispatch. Plan, apply, and verify are
+separate operations. The private state bucket holds the short-lived saved plan;
+GitHub artifacts never contain raw Terraform plan files. Apply rejects a changed
+commit, source digest, input digest, profile, expired plan, or mismatched plan
+digest. Verification runs the live contract plus a no-drift plan before publishing
+the canonical `verified` gate. Protected environments approve apply, public edge,
+production, paid, destructive, reaper, and final-delete operations.
+
+Gate records use explicit `planned`, `applied`, `verified`, `failed`, and
+`destroyed` states. A four-hour environment lease is created before the first
+runtime apply and later layers cannot extend it. The hourly reaper follows that
+lease rather than deriving lifetime from the latest passing gate.
 
 Cloud Build becomes the trusted build engine only after its own layer passes.
 Cloud Deploy becomes the release engine only after internal workloads pass.

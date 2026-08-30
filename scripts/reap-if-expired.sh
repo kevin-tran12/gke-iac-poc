@@ -3,16 +3,20 @@ set -euo pipefail
 
 : "${TF_STATE_BUCKET:?TF_STATE_BUCKET is required}"
 mkdir -p .gate-state
-mapfile -t records < <(gcloud storage ls "gs://${TF_STATE_BUCKET}/gates/layer-*.json" 2>/dev/null | sort -V)
-(( ${#records[@]} > 0 )) || { printf 'No live gate records; nothing to reap.\n'; exit 0; }
-latest=${records[-1]}
-gcloud storage cp "$latest" .gate-state/reaper.json >/dev/null
-expires=$(jq -r .expires_at .gate-state/reaper.json)
+remote="gs://${TF_STATE_BUCKET}/gates/environment-lease.json"
+lease=.gate-state/environment-lease.json
+if ! gcloud storage cp "$remote" "$lease" >/dev/null 2>&1; then
+  printf 'No active environment lease; nothing to reap.\n'
+  exit 0
+fi
+
+jq -e '.schema_version == 1 and .status == "active" and .expires_at' "$lease" >/dev/null
+expires=$(jq -r .expires_at "$lease")
 expires_epoch=$(date -u -d "$expires" +%s)
 now_epoch=$(date -u +%s)
 if (( expires_epoch <= now_epoch )); then
-  printf 'Environment expired at %s; starting reverse-order teardown.\n' "$expires"
+  printf 'Environment lease expired at %s; starting reverse-order teardown.\n' "$expires"
   bash scripts/teardown-runtime.sh
 else
-  printf 'Environment remains valid until %s.\n' "$expires"
+  printf 'Environment lease remains valid until %s. Later gate runs cannot extend it.\n' "$expires"
 fi

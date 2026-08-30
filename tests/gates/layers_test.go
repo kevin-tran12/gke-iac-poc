@@ -64,11 +64,11 @@ func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 	requireContains(t, "terraform/bootstrap/versions.tf",
 		`alias                 = "billing"`, "billing_project       = var.project_id",
 		"user_project_override = true")
-	requireContains(t, "scripts/gates/run-layer.sh",
-		`TF_VAR_project_id="$(terraform -chdir=terraform/bootstrap output -raw project_id)"`,
-		`TF_STATE_BUCKET="$(terraform -chdir=terraform/bootstrap output -raw state_bucket)"`,
-		"export TF_VAR_project_id TF_VAR_project_number TF_VAR_region TF_STATE_BUCKET")
-	requireContains(t, "scripts/gates/test-live-layer.sh",
+	requireContains(t, "scripts/gates/common.sh",
+		`TF_VAR_project_id="$(state_output bootstrap project_id)"`,
+		`TF_STATE_BUCKET="$(state_output bootstrap state_bucket)"`,
+		"refresh_bootstrap_outputs")
+	requireContains(t, "scripts/gates/live/layer-01.sh",
 		"bootstrap-project.json", "billingbudgets.googleapis.com",
 		"bootstrap-state-bucket.json", ".uniform_bucket_level_access == true",
 		`.public_access_prevention == "enforced"`, "--managed-by=user")
@@ -87,13 +87,26 @@ func TestGateScriptsUseThePinnedContainerToolchain(t *testing.T) {
 
 func TestGateEvidenceUsesCumulativeSourceDigests(t *testing.T) {
 	requireContains(t, "scripts/gates/layer-source-digest.sh",
-		"change to a later layer leaves earlier proof reusable", "terraform/bootstrap",
-		"terraform/network", "terraform/platform", "terraform/recovery", "git hash-object")
+		"changing a later test does not invalidate earlier proof", "terraform/bootstrap",
+		"terraform/network", "terraform/platform", "terraform/recovery", "scripts/gates/live/layer-09.sh", "git hash-object")
 	requireContains(t, "scripts/gates/check-prerequisites.sh",
-		"git merge-base --is-ancestor", ".source_digest // empty", "layer-source-digest.sh")
-	requireContains(t, "scripts/gates/record-result.sh", "source_digest", "layer-source-digest.sh")
-	requireContains(t, "scripts/gates/run-layer.sh",
-		"live apply requires a clean working tree", "git status --porcelain --untracked-files=normal")
+		"git merge-base --is-ancestor", ".source_digest // empty", "layer-source-digest.sh", "verified",
+		"terraform_states", "state lineage changed", "state serial changed")
+	requireContains(t, "scripts/gates/record-result.sh",
+		"schema_version", "planned|applied|verified|failed|destroyed", "terraform_states", "layer-source-digest.sh")
+	requireContains(t, "scripts/gates/common.sh",
+		"apply and verification require a clean working tree", "git status --porcelain --untracked-files=normal")
+}
+
+func TestLayer00SeparatesPlanApplyAndVerification(t *testing.T) {
+	requireContains(t, "Makefile", "plan-layer:", "apply-layer:", "verify-layer:", "destroy-layer:")
+	requireContains(t, "scripts/gates/plan-layer.sh", "input_digest", "plan_digest", "PLAN_STORE_URI")
+	requireContains(t, "scripts/gates/apply-layer.sh", "validate-plan.sh", "create-lease.sh")
+	requireContains(t, "scripts/gates/validate-plan.sh",
+		"saved plan digest does not match its manifest", "Terraform inputs changed after planning", "saved plan has expired")
+	requireContains(t, "scripts/gates/verify-layer.sh", "post-apply drift detected", "record-result.sh \"$layer\" verified")
+	requireContains(t, "scripts/gates/run-layer.sh", "APPLY=true is no longer supported")
+	requireContains(t, "scripts/reap-if-expired.sh", "environment-lease.json", "Later gate runs cannot extend it")
 }
 
 func TestLayer02NetworkIsPrivateByDefault(t *testing.T) {
@@ -125,7 +138,7 @@ func TestLayer04PrivateGKEContract(t *testing.T) {
 		"enable_private_nodes", "ip_endpoints_config", "enabled = false", "ADVANCED_DATAPATH",
 		"GKE_METADATA", "enable_secure_boot", "CHANNEL_STANDARD",
 		"depends_on = [google_container_cluster.lab]")
-	requireContains(t, "scripts/gates/test-live-layer.sh",
+	requireContains(t, "scripts/gates/live/layer-04.sh",
 		"controlPlaneEndpointsConfig.ipEndpointsConfig.enabled == false",
 		"managedPrometheusConfig.enabled == true", "system-node-pool.json",
 		"spot-node-pool.json", "kubectl wait --for=condition=Ready node")

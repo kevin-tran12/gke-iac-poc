@@ -48,3 +48,6 @@ printf 'Scanning IaC and Docker configuration for high-severity misconfiguration
 trivy config --exit-code 1 --severity HIGH,CRITICAL --skip-version-check \
   --ignorefile "$repo_root/.trivyignore.yaml" \
   --skip-dirs .terraform --skip-dirs test-results "$repo_root"
+
+printf 'Checking the Dev Container Dockerfile with BuildKit...\n'
+DOCKER_BUILDKIT=1 docker build --check -f .devcontainer/Dockerfile .

@@ -9,6 +9,18 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  dependency-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+      - name: Dependency review only applies to pull requests
+        if: github.event_name != 'pull_request'
+        run: echo 'No dependency diff exists on a branch push.'
   security:
     uses: ./.github/workflows/ci-security.yml
   layer-00:
@@ -43,7 +55,7 @@ jobs:
   all-required:
     name: ci/all-required
     if: always()
-    needs: [security, layer-00, layer-01, layer-02, layer-03, layer-04, layer-05, layer-06, layer-07, layer-08, layer-09]
+    needs: [dependency-review, security, layer-00, layer-01, layer-02, layer-03, layer-04, layer-05, layer-06, layer-07, layer-08, layer-09]
     runs-on: ubuntu-24.04
     steps:
       - name: Require every layer
