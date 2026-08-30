@@ -210,6 +210,8 @@ resource "google_service_account_iam_member" "api_workload_identity" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${var.api_service_account}"
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[${each.value}/gke-lab-api]"
+
+  depends_on = [google_container_cluster.lab]
 }
 
 resource "google_service_account_iam_member" "worker_workload_identity" {
@@ -218,10 +220,14 @@ resource "google_service_account_iam_member" "worker_workload_identity" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${var.worker_service_account}"
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[${each.value}/gke-lab-worker]"
+
+  depends_on = [google_container_cluster.lab]
 }
 
 resource "google_service_account_iam_member" "telemetry_workload_identity" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${var.telemetry_service_account}"
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[observability/otel-collector]"
+
+  depends_on = [google_container_cluster.lab]
 }

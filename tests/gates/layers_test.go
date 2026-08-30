@@ -136,11 +136,19 @@ func TestLayer03PlatformDurabilityAndLifecycle(t *testing.T) {
 func TestLayer04PrivateGKEContract(t *testing.T) {
 	requireContains(t, "terraform/cluster/main.tf",
 		"enable_private_nodes", "ip_endpoints_config", "enabled = false", "ADVANCED_DATAPATH",
-		"GKE_METADATA", "enable_secure_boot", "CHANNEL_STANDARD")
+		"GKE_METADATA", "enable_secure_boot", "CHANNEL_STANDARD",
+		"depends_on = [google_container_cluster.lab]")
 	requireContains(t, "scripts/gates/live/layer-04.sh",
 		"controlPlaneEndpointsConfig.ipEndpointsConfig.enabled == false",
 		"managedPrometheusConfig.enabled == true", "system-node-pool.json",
 		"spot-node-pool.json", "kubectl wait --for=condition=Ready node")
+	if count := strings.Count(content(t, "terraform/cluster/main.tf"), "depends_on = [google_container_cluster.lab]"); count != 3 {
+		t.Errorf("all three Workload Identity binding groups must depend on cluster creation; found %d explicit dependencies", count)
+	}
+	requireContains(t, ".trivyignore.yaml",
+		"GCP-0061", "IP endpoints disabled", "terraform/cluster/main.tf", "expired_at")
+	requireContains(t, "scripts/ci/security-gates.sh",
+		"--skip-dirs .terraform --skip-dirs test-results")
 }
 
 func TestLayer05AddonsSecurity(t *testing.T) {
