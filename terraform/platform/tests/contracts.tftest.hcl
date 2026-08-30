@@ -30,3 +30,23 @@ run "managed_services_contract" {
     error_message = "Cloud Deploy IAM must depend on an explicitly provisioned Google-managed service identity."
   }
 }
+
+run "cloud_sql_consumes_layer_two_range" {
+  command = plan
+
+  variables {
+    project_id                  = "gke-lab-unit-test"
+    project_number              = "123456789012"
+    network_id                  = "projects/gke-lab-unit-test/global/networks/gke-lab"
+    enable_cloud_sql            = true
+    private_services_range_name = "gke-lab-private-services"
+  }
+
+  assert {
+    condition = (
+      length(google_service_networking_connection.private_services[0].reserved_peering_ranges) == 1 &&
+      contains(google_service_networking_connection.private_services[0].reserved_peering_ranges, "gke-lab-private-services")
+    )
+    error_message = "Cloud SQL must consume the Private Service Access range owned by Layer 2."
+  }
+}
