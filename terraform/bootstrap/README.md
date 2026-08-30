@@ -35,6 +35,31 @@ and Costs Manager roles. No GitHub identity can edit billing-account IAM. Removi
 those trust-anchor bindings after final project deletion therefore remains an
 explicit billing-account operator cleanup step.
 
+Policy Troubleshooter must read IAM deny policies inherited from the organization
+to return conclusive `CAN_ACCESS` results. For an organization-owned project, an
+organization administrator performs this one-time prerequisite after the
+Foundation service account exists:
+
+```bash
+PROJECT_ID=$(terraform -chdir=terraform/bootstrap output -raw project_id)
+ORGANIZATION_ID=$(gcloud projects get-ancestors "$PROJECT_ID" --format=json |
+  jq -r '.[] | select(.type == "organization") | .id')
+OPERATOR_ACCOUNT=$(gcloud auth list --filter='status:ACTIVE' --format='value(account)')
+FOUNDATION_ACCOUNT=$(terraform -chdir=terraform/bootstrap output -raw terraform_foundation_service_account)
+
+gcloud organizations add-iam-policy-binding "$ORGANIZATION_ID" \
+  --member="user:${OPERATOR_ACCOUNT}" --role=roles/iam.denyReviewer --condition=None
+gcloud organizations add-iam-policy-binding "$ORGANIZATION_ID" \
+  --member="serviceAccount:${FOUNDATION_ACCOUNT}" --role=roles/iam.denyReviewer --condition=None
+```
+
+`roles/iam.denyReviewer` is read-only. The operator needs it for local live gates,
+and Foundation needs it for the protected GitHub gate. These bindings are an
+explicit organization bootstrap prerequisite rather than project Terraform
+resources: allowing Foundation to manage organization IAM solely to maintain its
+own reader binding would violate the phase boundary. Remove both bindings during
+the final organization cleanup if they are no longer needed.
+
 Use `terraform.tfvars.example`, never commit its populated copy, and run
 `scripts/migrate-state.sh` only after the first verified Gate 1. The migration
 creates an ignored `backend.tf` because the bucket cannot be a backend until it

@@ -25,6 +25,13 @@ For release evidence, also dispatch the approved live workflow from a non-`main`
 ref and from a fork configured with the public provider name; both must be denied
 before a Terraform command executes.
 
+For an organization-owned project, the local bootstrap operator and Foundation
+CI identity receive the read-only organization role `roles/iam.denyReviewer` as
+the one-time prerequisite documented in `terraform/bootstrap/README.md`. Without
+it, Policy Troubleshooter reports `UNKNOWN_INFO` because it cannot evaluate every
+inherited deny policy; the gate rejects that inconclusive result rather than
+treating an allow-policy match as proof of effective access.
+
 The recovery identity intentionally holds the union needed to delete runtime
 resources. That is a conscious tradeoff: teardown remains reliable after a
 partial failure, while exposure is constrained to recovery/teardown workflow and
