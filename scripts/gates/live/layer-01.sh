@@ -71,12 +71,25 @@ troubleshoot() {
   local phase=${1:?phase required}
   local permission=${2:?permission required}
   local expected=${3:?expected state required}
-  local service_account result
+  local service_account result actual
   service_account=$(jq -r --arg phase "$phase" '.[$phase]' <<<"$phase_accounts")
   result="test-results/live/iam-troubleshooter/${phase}-${permission//./-}.json"
   gcloud policy-intelligence troubleshoot-policy iam "$project_resource" \
     --principal-email="$service_account" --permission="$permission" --format=json >"$result"
-  jq -e --arg expected "$expected" '.overallAccessState == $expected' "$result" >/dev/null
+  actual=$(jq -r '.overallAccessState // empty' "$result")
+  if [[ $actual != "$expected" ]]; then
+    if [[ $actual == "UNKNOWN_INFO" ]]; then
+      printf '%s\n' \
+        "Policy Troubleshooter could not read every inherited deny policy." \
+        "Grant roles/iam.denyReviewer on the project organization to the local bootstrap operator" \
+        "and the Foundation CI service account, then rerun a fresh Layer 1 plan and apply." \
+        "See terraform/bootstrap/README.md." >&2
+    else
+      printf 'Policy Troubleshooter expected %s for %s:%s but returned %s.\n' \
+        "$expected" "$phase" "$permission" "${actual:-no state}" >&2
+    fi
+    return 1
+  fi
 }
 
 troubleshoot foundation compute.networks.create CAN_ACCESS

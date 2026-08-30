@@ -83,7 +83,10 @@ func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 		"public_access_prevention", ".soft_delete_policy.retentionDurationSeconds",
 		`== "enforced"`, "--managed-by=user",
 		"budget_resource_name", "policy-intelligence troubleshoot-policy iam",
-		"CAN_ACCESS", "CANNOT_ACCESS")
+		"CAN_ACCESS", "CANNOT_ACCESS", "UNKNOWN_INFO", "roles/iam.denyReviewer")
+	requireContains(t, "terraform/bootstrap/README.md",
+		"roles/iam.denyReviewer", "OPERATOR_ACCOUNT", "FOUNDATION_ACCOUNT",
+		"organization bootstrap prerequisite")
 	requireContains(t, ".github/workflows/integration-layer.yml",
 		"TERRAFORM_FOUNDATION_SERVICE_ACCOUNT", "TERRAFORM_CLUSTER_SERVICE_ACCOUNT",
 		"TERRAFORM_DELIVERY_SERVICE_ACCOUNT", "TERRAFORM_RECOVERY_SERVICE_ACCOUNT")
