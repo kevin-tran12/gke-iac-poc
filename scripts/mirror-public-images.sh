@@ -21,9 +21,18 @@ output=test-results/live/mirrored-images.env
 
 mirror() {
   local variable=$1 source=$2 destination=$3
+  local candidate digest
   docker pull "$source"
-  docker tag "$source" "${registry}/${destination}:candidate"
-  digest=$(docker push "${registry}/${destination}:candidate" | awk '/digest: sha256:/ {print $2}' | tail -1)
+  candidate="${registry}/${destination}:candidate"
+  docker tag "$source" "$candidate"
+  docker push "$candidate"
+  digest=""
+  for _ in {1..12}; do
+    digest=$(gcloud artifacts docker images describe "$candidate" \
+      --format='value(image_summary.digest)' 2>/dev/null || true)
+    [[ $digest =~ ^sha256:[0-9a-f]{64}$ ]] && break
+    sleep 2
+  done
   [[ $digest =~ ^sha256:[0-9a-f]{64}$ ]] || { printf 'could not resolve digest for %s\n' "$destination" >&2; exit 1; }
   MIRRORED_IMAGE="${registry}/${destination}@${digest}"
   printf '%s=%s\n' "$variable" "$MIRRORED_IMAGE" | tee -a "$output"

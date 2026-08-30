@@ -114,7 +114,10 @@ func TestLayer03PlatformDurabilityAndLifecycle(t *testing.T) {
 	requireContains(t, "cloudbuild.yaml", "requestedVerifyOption: VERIFIED", "api-sbom", "${_REGISTRY}")
 	requireContains(t, "scripts/build-release.sh", `--gcs-source-staging-dir="gs://${EVIDENCE_BUCKET}/cloud-build-source"`)
 	requireContains(t, "scripts/mirror-public-images.sh",
-		`printf 'TF_VAR_cert_manager_images=%q\n'`, "@${digest}")
+		`printf 'TF_VAR_cert_manager_images=%q\n'`, "@${digest}",
+		`gcloud artifacts docker images describe "$candidate"`,
+		`--format='value(image_summary.digest)'`)
+	requireNotContains(t, "scripts/mirror-public-images.sh", "awk '/digest: sha256:/")
 }
 
 func TestLayer04PrivateGKEContract(t *testing.T) {
