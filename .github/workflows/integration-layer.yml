@@ -24,9 +24,7 @@ jobs:
         with:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-          # Layer 1 replaces this transitional identity with phase-specific
-          # plan/apply identities and prefix-scoped plan storage permissions.
-          service_account: ${{ vars.TERRAFORM_APPLY_SERVICE_ACCOUNT }}
+          service_account: ${{ inputs.layer <= 3 && vars.TERRAFORM_FOUNDATION_SERVICE_ACCOUNT || inputs.layer <= 6 && vars.TERRAFORM_CLUSTER_SERVICE_ACCOUNT || inputs.layer <= 8 && vars.TERRAFORM_DELIVERY_SERVICE_ACCOUNT || vars.TERRAFORM_RECOVERY_SERVICE_ACCOUNT }}
       - name: Run one explicit layer operation
         env:
           PROFILE: ${{ inputs.profile }}

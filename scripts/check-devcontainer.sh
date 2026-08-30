@@ -37,6 +37,16 @@ test "$(stat -c '%a' /home/vscode/.gnupg)" = 700 || {
   exit 1
 }
 
+expected_gpg_program=/home/vscode/.local/bin/gpg-with-tty
+test "$(git config --global --get gpg.program)" = "$expected_gpg_program" || {
+  printf 'Git GPG terminal wrapper is not configured. Run: bash .devcontainer/post-create.sh\n' >&2
+  exit 1
+}
+grep -Fxq "source $PWD/.devcontainer/gpg-shell-init.sh" /home/vscode/.bashrc || {
+  printf 'GPG shell startup is not configured. Run: bash .devcontainer/post-create.sh\n' >&2
+  exit 1
+}
+
 if [[ $mode == --require-auth ]]; then
   gh auth status >/dev/null || {
     printf 'GitHub CLI is not authenticated. Run: gh auth login\n' >&2

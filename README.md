@@ -47,6 +47,8 @@ and final-delete stages use protected GitHub environments.
 - [Repository map](docs/repository-map.md)
 - [Bottom-up build and CI gates](docs/build-order.md)
 - [Service catalog](docs/service-catalog.md)
+- [API ownership catalog](docs/api-catalog.md)
+- [Terraform IAM permission matrix](docs/iam-permission-matrix.md)
 - [Security model](docs/security-model.md)
 - [Testing and failure labs](docs/test-strategy.md)
 - [Public test-image choices](docs/public-test-images.md)
@@ -72,7 +74,7 @@ make lab NAME=image-pull-failure
 make evidence
 make teardown-runtime
 make verify-zero-cost
-make teardown-final
+CONFIRM_FINAL_DELETE="$TF_VAR_project_id" make teardown-final
 ```
 
 `make test-layer` is the development loop. Planning never applies or publishes

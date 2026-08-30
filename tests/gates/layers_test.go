@@ -59,8 +59,16 @@ func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 		"auto_create_network = false", "google_billing_budget", "github_repository_id",
 		"github_owner_id", "org_id              = var.organization_id",
 		"roles/iam.workloadIdentityUser", "uniform_bucket_level_access = true",
-		`"attribute.workflow_ref"`, "local.apply_workflow_refs", "@refs/heads/main",
-		`"billingbudgets.googleapis.com"`, "depends_on = [google_project_service.required]")
+		`"attribute.workflow_ref"`, `"attribute.job_workflow_ref"`, `"attribute.environment"`,
+		"assertion.ref == 'refs/heads/main'", "local.phase_service_accounts",
+		`"billingbudgets.googleapis.com"`, `"policytroubleshooter.googleapis.com"`,
+		"bootstrap_profile == \"full\"", "depends_on = [google_project_service.required]",
+		"force_destroy               = false", "deletion_policy             = \"PREVENT\"",
+		"soft_delete_policy", "google_project_iam_audit_config", "retention_days = 30",
+		"terraformFoundationStorageControl", "phase_state_prefixes")
+	requireContains(t, "terraform/bootstrap/outputs.tf",
+		"terraform_foundation_service_account", "terraform_cluster_service_account",
+		"terraform_delivery_service_account", "terraform_recovery_service_account")
 	requireContains(t, "terraform/bootstrap/versions.tf",
 		`alias                 = "billing"`, "billing_project       = var.project_id",
 		"user_project_override = true")
@@ -69,12 +77,21 @@ func TestLayer01BootstrapIdentityAndCostControls(t *testing.T) {
 		`TF_STATE_BUCKET="$(state_output bootstrap state_bucket)"`,
 		"refresh_bootstrap_outputs")
 	requireContains(t, "scripts/gates/live/layer-01.sh",
-		"bootstrap-project.json", "billingbudgets.googleapis.com",
-		"bootstrap-state-bucket.json", ".uniform_bucket_level_access == true",
-		`.public_access_prevention == "enforced"`, "--managed-by=user")
+		"bootstrap-project.json", "enabled_service_catalog", "bootstrap-budget.json",
+		"bootstrap-state-bucket.json", "uniform_bucket_level_access",
+		"public_access_prevention", `== "enforced"`, "--managed-by=user",
+		"policy-intelligence troubleshoot-policy iam", "CAN_ACCESS", "CANNOT_ACCESS")
+	requireContains(t, ".github/workflows/integration-layer.yml",
+		"TERRAFORM_FOUNDATION_SERVICE_ACCOUNT", "TERRAFORM_CLUSTER_SERVICE_ACCOUNT",
+		"TERRAFORM_DELIVERY_SERVICE_ACCOUNT", "TERRAFORM_RECOVERY_SERVICE_ACCOUNT")
+	requireContains(t, "scripts/adopt-project.sh",
+		"billingAccountName", "expected_organization", "terraform -chdir=terraform/bootstrap import")
+	requireContains(t, "scripts/teardown-final.sh", "CONFIRM_FINAL_DELETE")
+	requireContains(t, ".github/workflows/wif-negative-test.yml", "Require federation denial")
 	requireNotContains(t, "terraform/bootstrap/main.tf",
 		"google_service_account_key", `"roles/secretmanager.secretAccessor"`,
 		`"roles/cloudkms.signerVerifier"`)
+	requireNotContains(t, ".github/workflows/integration-layer.yml", "TERRAFORM_APPLY_SERVICE_ACCOUNT")
 }
 
 func TestGateScriptsUseThePinnedContainerToolchain(t *testing.T) {

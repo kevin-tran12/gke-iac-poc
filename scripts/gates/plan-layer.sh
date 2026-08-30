@@ -23,7 +23,7 @@ mapfile -t profile_args < <(profile_arguments "$root" "$profile")
 
 if (( layer == 1 )); then
   terraform -chdir=terraform/bootstrap plan -input=false -lock-timeout=60s \
-    -var-file="$BOOTSTRAP_TFVARS" -out="../../${plan_path}"
+    -var-file="$BOOTSTRAP_TFVARS" -var="bootstrap_profile=${profile}" -out="../../${plan_path}"
 else
   terraform -chdir="terraform/${root}" plan -input=false -lock-timeout=60s \
     "${profile_args[@]}" -out="../../${plan_path}"

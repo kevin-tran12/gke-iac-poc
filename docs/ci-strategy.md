@@ -32,6 +32,12 @@ digest. Verification runs the live contract plus a no-drift plan before publishi
 the canonical `verified` gate. Protected environments approve apply, public edge,
 production, paid, destructive, reaper, and final-delete operations.
 
+The reusable live workflow selects one of four service accounts from the layer
+number: foundation (1–3), cluster (4–6), delivery (7–8), or recovery (9). WIF
+also validates the immutable repository and owner IDs, `main`, the caller and
+reusable workflow refs, and the job environment. Repository variables alone
+cannot widen that trust policy.
+
 Gate records use explicit `planned`, `applied`, `verified`, `failed`, and
 `destroyed` states. A four-hour environment lease is created before the first
 runtime apply and later layers cannot extend it. The hourly reaper follows that
