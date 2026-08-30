@@ -49,7 +49,7 @@ drift_plan="test-results/live/${root}-drift.tfplan"
 set +e
 if (( layer == 1 )); then
   terraform -chdir=terraform/bootstrap plan -detailed-exitcode -input=false -lock-timeout=60s \
-    -var-file="$BOOTSTRAP_TFVARS" -out="../../${drift_plan}"
+    -var-file="$BOOTSTRAP_TFVARS" -var="bootstrap_profile=${profile}" -out="../../${drift_plan}"
 else
   terraform -chdir="terraform/${root}" plan -detailed-exitcode -input=false -lock-timeout=60s \
     "${profile_args[@]}" -out="../../${drift_plan}"

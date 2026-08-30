@@ -4,7 +4,12 @@
 
 - GitHub pull requests have read-only repository permissions and no GCP token.
 - Approved live workflows exchange GitHub OIDC for a short-lived service-account
-  credential restricted to immutable repository identity.
+  credential restricted to immutable repository and owner IDs, `main`, reviewed
+  caller/reusable workflow refs, and a protected phase environment.
+- Foundation, cluster, delivery, and recovery use different Google service
+  accounts and state-object prefixes. Normal phases can read prerequisite gate
+  evidence but cannot rewrite another phase's acceptance record. The broad
+  cleanup union is unavailable to pull-request CI and ordinary phase workflows.
 - GKE nodes are private and use a dedicated least-privilege node identity.
 - Kubernetes service accounts impersonate separate API and worker Google service
   accounts through Workload Identity.
@@ -33,3 +38,8 @@ The API's lab bearer token is an intentionally limited demonstration, not a
 production customer identity system. Cloud Armor bounds abuse; the environment's
 TTL and reaper bound exposure. Authorization headers, payloads, secret values,
 signed URLs, and credentials are excluded from logs and evidence.
+
+Data Access audit logs are enabled for IAM, Secret Manager, Cloud KMS, and Cloud
+Storage. The default log bucket retains them for 30 days. Secret payloads and
+Terraform plan binaries are never uploaded as evidence; evidence records contain
+only sanitized control results, digests, and identifiers needed for auditability.

@@ -20,13 +20,30 @@ Bootstrap is the only local-credential step:
 cp terraform/bootstrap/terraform.tfvars.example terraform/bootstrap/terraform.auto.tfvars
 export BOOTSTRAP_TFVARS="$PWD/terraform/bootstrap/terraform.auto.tfvars"
 make test-layer LAYER=1
-make plan-layer LAYER=1 PROFILE=core
+make plan-layer LAYER=1 PROFILE=full
 # Review test-results/live/bootstrap.tfplan and bootstrap.plan.json.
-make apply-layer LAYER=1 PROFILE=core
-make verify-layer LAYER=1 PROFILE=core
+make apply-layer LAYER=1 PROFILE=full
+make verify-layer LAYER=1 PROFILE=full
 export TF_STATE_BUCKET="$(terraform -chdir=terraform/bootstrap output -raw state_bucket)"
 bash scripts/migrate-state.sh
 ```
+
+The Dev Container persists the GPG keyring and configures a terminal-aware GPG
+wrapper during post-create. After a restart, open an integrated terminal before
+making a signed commit; the shell refreshes pinentry's current TTY automatically.
+The agent may request the key passphrase once because passphrase caching is
+in-memory and does not survive a stopped container. VS Code Source Control can
+sign only after the agent has been unlocked from an interactive terminal.
+
+If the project already exists, verify its billing and organization ownership
+before importing it:
+
+```bash
+export BOOTSTRAP_TFVARS="$PWD/terraform/bootstrap/terraform.auto.tfvars"
+bash scripts/adopt-project.sh PROJECT_ID BILLING_ACCOUNT ORGANIZATION_ID
+```
+
+Omit `ORGANIZATION_ID` only for a project that truly has no organization parent.
 
 Apply layers 2 and 3, then run `scripts/mirror-public-images.sh` with reviewed source
 references. This keeps public and cert-manager pulls inside Artifact Registry for
@@ -37,7 +54,8 @@ Configure these GitHub repository variables before protected live workflows:
 
 | Group | Variables |
 | --- | --- |
-| Project/WIF | `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER`, `GCP_REGION`, `TF_STATE_BUCKET`, `WIF_PROVIDER`, `TERRAFORM_APPLY_SERVICE_ACCOUNT` |
+| Project/WIF | `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER`, `GCP_REGION`, `TF_STATE_BUCKET`, `WIF_PROVIDER` |
+| Phase identities | `TERRAFORM_FOUNDATION_SERVICE_ACCOUNT`, `TERRAFORM_CLUSTER_SERVICE_ACCOUNT`, `TERRAFORM_DELIVERY_SERVICE_ACCOUNT`, `TERRAFORM_RECOVERY_SERVICE_ACCOUNT` |
 | Workloads | `ECHO_IMAGE`, `HELLO_IMAGE`, `HPA_IMAGE`, `RECOVERY_IMAGE`, `OTEL_COLLECTOR_IMAGE`, `CERT_MANAGER_IMAGES_JSON`, `LOAD_IMAGE` |
 | Trusted build | `GO_BUILDER_IMAGE`, `DOCKER_BUILDER_IMAGE`, `RUNTIME_IMAGE`, `SYFT_IMAGE`, `SMOKE_IMAGE`, `VERIFIER_IMAGE` |
 | Public edge | `ACME_EMAIL` |
@@ -55,3 +73,9 @@ layer to work around an earlier defect.
 
 The compatibility command `make layer` is plan-only. `APPLY=true make layer` is
 rejected so a plan-only invocation can never masquerade as successful live proof.
+
+Create `foundation`, `cluster`, `delivery`, `recovery`, `production`,
+`automated-reaper`, `destructive-labs`, and `final-delete` GitHub environments.
+Restrict every environment to `main`. Require a reviewer for human-initiated
+apply, promotion, destructive, and final-delete paths. `automated-reaper` must
+remain non-interactive so an expired lab cannot wait for approval.

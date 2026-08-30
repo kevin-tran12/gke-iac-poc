@@ -30,4 +30,4 @@ jobs:
       layer: ${{ fromJSON(inputs.layer) }}
       profile: ${{ inputs.profile }}
       operation: ${{ inputs.operation }}
-      approval_environment: ${{ inputs.operation == 'plan' && 'cloud-plan' || inputs.layer == '8' && 'public-edge' || inputs.profile != 'core' && 'paid-profile' || 'cloud-apply' }}
+      approval_environment: ${{ fromJSON(inputs.layer) <= 3 && 'foundation' || fromJSON(inputs.layer) <= 6 && 'cluster' || fromJSON(inputs.layer) <= 8 && 'delivery' || 'recovery' }}

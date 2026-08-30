@@ -1,0 +1,24 @@
+name: WIF wrong-workflow denial test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  deny:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: foundation
+    steps:
+      - name: Attempt authentication from an unapproved workflow
+        id: denied_auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.TERRAFORM_FOUNDATION_SERVICE_ACCOUNT }}
+      - name: Require federation denial
+        env:
+          AUTH_OUTCOME: ${{ steps.denied_auth.outcome }}
+        run: test "$AUTH_OUTCOME" = failure

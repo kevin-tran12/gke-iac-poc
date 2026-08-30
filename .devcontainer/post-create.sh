@@ -22,6 +22,17 @@ chmod 700 /home/vscode/.gnupg
 find /home/vscode/.gnupg -type d -exec chmod 700 {} +
 find /home/vscode/.gnupg -type f -exec chmod 600 {} +
 
+gpg_shell_init="$PWD/.devcontainer/gpg-shell-init.sh"
+gpg_init_line="source $gpg_shell_init"
+gpg_program=/home/vscode/.local/bin/gpg-with-tty
+touch /home/vscode/.bashrc
+if ! grep -Fxq "$gpg_init_line" /home/vscode/.bashrc; then
+  printf '\n# Refresh GPG pinentry after Dev Container restarts.\n%s\n' "$gpg_init_line" \
+    >>/home/vscode/.bashrc
+fi
+install -D -m 0755 "$PWD/scripts/gpg-with-tty.sh" "$gpg_program"
+git config --global gpg.program "$gpg_program"
+
 printf 'Terraform: %s\n' "$(terraform version -json | jq -r .terraform_version)"
 printf 'Go: %s\n' "$(go version)"
 printf 'kubectl: %s\n' "$(kubectl version --client -o json | jq -r .clientVersion.gitVersion)"

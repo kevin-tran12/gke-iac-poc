@@ -6,6 +6,8 @@
 - [Build order](build-order.md)
 - [CI strategy](ci-strategy.md)
 - [Service catalog](service-catalog.md)
+- [API ownership catalog](api-catalog.md)
+- [Terraform IAM permission matrix](iam-permission-matrix.md)
 - [Deployment guide](deployment-guide.md)
 - [Security model](security-model.md)
 - [Reliability and recovery](reliability-and-recovery.md)

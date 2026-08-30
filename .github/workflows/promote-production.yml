@@ -24,7 +24,7 @@ jobs:
         with:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-          service_account: ${{ vars.TERRAFORM_APPLY_SERVICE_ACCOUNT }}
+          service_account: ${{ vars.TERRAFORM_DELIVERY_SERVICE_ACCOUNT }}
       - name: Promote and approve production rollout
         env:
           PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}

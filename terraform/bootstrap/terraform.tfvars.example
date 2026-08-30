@@ -4,4 +4,5 @@ organization_id      = null # Or the numeric organization ID for an organization
 github_owner_id      = "replace-with-numeric-owner-id"
 github_repository_id = "replace-with-numeric-repository-id"
 github_repository    = "your-github-owner/gke-iac-poc"
+bootstrap_profile    = "full" # Enables Cloud SQL, delivery, Binary Authorization, and Backup APIs.
 budget_amount_usd    = 75

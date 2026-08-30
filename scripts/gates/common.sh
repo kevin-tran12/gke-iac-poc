@@ -105,6 +105,10 @@ prepare_layer() {
     return
   fi
   if (( layer == 1 )); then
+    [[ $profile == core || $profile == full ]] || {
+      printf 'layer 1 profile must be core or full\n' >&2
+      return 2
+    }
     test -n "${BOOTSTRAP_TFVARS:-}" || {
       printf 'BOOTSTRAP_TFVARS is required for layer 1\n' >&2
       return 2

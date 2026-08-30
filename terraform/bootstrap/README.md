@@ -1,17 +1,47 @@
 # Layer 1: bootstrap
 
-This is the only root that starts with local state. It creates the disposable
-project, enables the API allowlist, installs a budget, creates the versioned GCS
-state bucket, and configures repository-bound GitHub OIDC federation. The WIF
-provider verifies immutable repository and owner IDs. Read-only planning is
-repository-scoped, while apply impersonation is limited to an explicit workflow
-allowlist at `refs/heads/main`; protected GitHub environments add the human
-approval boundary. Adding or renaming a live workflow therefore requires an
-intentional update to `local.apply_workflow_refs`.
+This is the only root that starts with local state. It creates or adopts the lab
+project, enables the profile-specific API allowlist, installs the $75 alerting
+budget, protects the remote-state bucket, enables targeted audit logs, and
+configures repository-bound GitHub federation.
+
+GitHub receives four keyless phase identities:
+
+| Identity | Layers | Protected environments |
+| --- | --- | --- |
+| Foundation | 1–3 | `foundation` |
+| Cluster | 4–6 | `cluster` |
+| Delivery | 7–8 and promotion | `delivery`, `production` |
+| Recovery | 9 and cleanup | `recovery`, `automated-reaper`, `destructive-labs`, `final-delete` |
+
+The WIF provider requires the immutable repository and owner IDs, `main`, the
+reviewed caller workflow, the pinned reusable workflow, and an expected GitHub
+environment. The service-account bindings then map each environment to only its
+phase identity. Changing any workflow filename or environment requires an
+intentional Terraform change.
+
+`bootstrap_profile=core` omits optional Cloud SQL, delivery, Binary
+Authorization, KMS, and Backup APIs. The selected portfolio demonstration uses
+`PROFILE=full`; API enablement itself is not the spending control—resource
+profiles, quotas, the four-hour lease, and teardown provide that boundary.
+
+For an existing project, run `scripts/adopt-project.sh` before import. It refuses
+to import until the active project, billing account, and organization placement
+match the operator's explicit values. Initial creation or adoption uses user ADC;
+normal GitHub operations remain keyless.
+
+The same initial operator step grants Foundation the narrow Billing Account User
+and Costs Manager roles. No GitHub identity can edit billing-account IAM. Removing
+those trust-anchor bindings after final project deletion therefore remains an
+explicit billing-account operator cleanup step.
 
 Use `terraform.tfvars.example`, never commit its populated copy, and run
-`scripts/migrate-state.sh` after the first successful apply and Gate 01 result.
-The migration script creates an ignored local `backend.tf` that switches this
-root to the new GCS backend; the bucket and backend cannot be configured before
-bootstrap creates them. Destroy this root only after all other roots and state
-objects are gone.
+`scripts/migrate-state.sh` only after the first verified Gate 1. The migration
+creates an ignored `backend.tf` because the bucket cannot be a backend until it
+exists. The bucket uses uniform access, public-access prevention, versioning,
+seven-day soft deletion, `force_destroy=false`, and Terraform deletion
+prevention.
+
+Normal teardown retains this root. Only the separate `final-delete.yml` workflow,
+its protected environment, and an exact project-ID confirmation may remove the
+state bucket, unlink billing, and request project deletion.

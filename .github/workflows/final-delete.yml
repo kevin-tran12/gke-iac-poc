@@ -1,6 +1,11 @@
-name: Teardown lab
+name: Final project deletion
 on:
   workflow_dispatch:
+    inputs:
+      confirm_project_id:
+        description: Type the exact GCP project ID to delete state, unlink billing, and delete the project
+        required: true
+        type: string
 permissions:
   contents: read
   id-token: write
@@ -8,28 +13,32 @@ concurrency:
   group: gke-lab-live
   cancel-in-progress: false
 jobs:
-  destroy:
+  delete:
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
-    environment: destructive-labs
+    timeout-minutes: 60
+    environment: final-delete
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-toolchain
+      - name: Require exact project confirmation
+        env:
+          EXPECTED_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          CONFIRM_PROJECT_ID: ${{ inputs.confirm_project_id }}
+        run: test "$CONFIRM_PROJECT_ID" = "$EXPECTED_PROJECT_ID"
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.TERRAFORM_RECOVERY_SERVICE_ACCOUNT }}
-      - name: Destroy runtime
+      - name: Delete retained foundation
         env:
+          CONFIRM_FINAL_DELETE: ${{ inputs.confirm_project_id }}
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
           TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID }}
-          TF_VAR_project_number: ${{ vars.GCP_PROJECT_NUMBER }}
-          TF_VAR_region: ${{ vars.GCP_REGION }}
-        run: bash scripts/teardown-runtime.sh
+        run: bash scripts/teardown-final.sh
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: teardown-${{ github.sha }}
+          name: final-delete-${{ github.sha }}
           path: test-results/
           retention-days: 30

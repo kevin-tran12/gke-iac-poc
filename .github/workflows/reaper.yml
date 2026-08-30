@@ -21,7 +21,7 @@ jobs:
         with:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
-          service_account: ${{ vars.TERRAFORM_APPLY_SERVICE_ACCOUNT }}
+          service_account: ${{ vars.TERRAFORM_RECOVERY_SERVICE_ACCOUNT }}
       - name: Destroy only when the newest gate expired
         env:
           TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
