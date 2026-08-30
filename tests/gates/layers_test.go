@@ -134,8 +134,20 @@ func TestLayer00SeparatesPlanApplyAndVerification(t *testing.T) {
 
 func TestLayer02NetworkIsPrivateByDefault(t *testing.T) {
 	requireContains(t, "terraform/network/main.tf",
-		"private_ip_google_access = true", "secondary_ip_range", "log_config", "var.enable_nat ? 1 : 0")
-	requireContains(t, "terraform/network/variables.tf", "10.10.0.0/20", "10.20.0.0/16", "10.30.0.0/20")
+		"private_ip_google_access = true", "secondary_ip_range", "log_config", "var.enable_nat ? 1 : 0",
+		"overlapping_cidr_pairs", "non_private_cidr_ranges", "maximum_cluster_nodes",
+		"INTERVAL_10_MIN", "EXCLUDE_ALL_METADATA", "google_compute_global_address")
+	requireContains(t, "terraform/network/variables.tf",
+		"10.10.0.0/20", "10.20.0.0/16", "10.30.0.0/20", "10.40.0.0/16",
+		"maximum_pods_per_node", "minimum_service_addresses")
+	requireContains(t, "terraform/network/tests/contracts.tftest.hcl",
+		"overlapping_ranges_are_rejected", "public_ranges_are_rejected",
+		"insufficient_pod_capacity_is_rejected", "nat_is_bounded_to_the_gke_subnet")
+	requireContains(t, "scripts/gates/live/layer-02.sh",
+		"network-routes.json", "network-firewall-rules.json", "compute-instances.json",
+		"default_network_absent", "cloud-nat-ip-info.json")
+	requireContains(t, "terraform/platform/main.tf", "var.private_services_range_name")
+	requireNotContains(t, "terraform/platform/main.tf", `resource "google_compute_global_address" "private_services"`)
 }
 
 func TestLayer03PlatformDurabilityAndLifecycle(t *testing.T) {

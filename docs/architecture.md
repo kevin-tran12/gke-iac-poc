@@ -12,7 +12,7 @@ code, sanitized evidence, and incident history.
 Terraform roots are deliberately ordered:
 
 1. `bootstrap`: project, APIs, budget, state bucket, GitHub WIF.
-2. `network`: VPC, private subnet, alias ranges, Private Google Access, optional NAT.
+2. `network`: VPC, private subnet, overlap-checked Pod/Service/Private Service Access ranges, Private Google Access, optional NAT.
 3. `platform`: registry, build identity, Pub/Sub, GCS, secrets, optional SQL.
 4. `cluster`: private GKE, node pools, Workload Identity, Dataplane V2.
 5. `addons`: cert-manager and OpenTelemetry.
@@ -65,4 +65,3 @@ profile tests topology and PDB behavior without becoming the default deployment.
 
 See the [service catalog](service-catalog.md), [security model](security-model.md),
 and [full diagram source](diagrams/source/gcp-architecture.mmd).
-

@@ -260,20 +260,11 @@ resource "google_dns_managed_zone" "private" {
   }
 }
 
-resource "google_compute_global_address" "private_services" {
-  count         = var.enable_cloud_sql ? 1 : 0
-  name          = "${local.prefix}-private-services"
-  purpose       = "VPC_PEERING"
-  address_type  = "INTERNAL"
-  prefix_length = 16
-  network       = var.network_id
-}
-
 resource "google_service_networking_connection" "private_services" {
   count                   = var.enable_cloud_sql ? 1 : 0
   network                 = var.network_id
   service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.private_services[0].name]
+  reserved_peering_ranges = [var.private_services_range_name]
 }
 
 resource "google_sql_database_instance" "postgres" {
